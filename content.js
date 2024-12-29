@@ -197,9 +197,9 @@ function showIcon(x, y) {
     translateIcon = createIcon();
   }
 
-  // 直接设置样式，而不是累加
-  translateIcon.style.left = `${Math.max(0, x)}px`;
-  translateIcon.style.top = `${Math.max(0, y)}px`;
+  // 直接使用传入的坐标，不做复杂的计算
+  translateIcon.style.left = `${x}px`;
+  translateIcon.style.top = `${y}px`;
   translateIcon.style.display = 'flex';
   translateIcon.style.opacity = '1';
   translateIcon.style.transform = 'translateY(0)';
@@ -226,9 +226,17 @@ document.addEventListener('mouseup', (e) => {
   const selectedText = window.getSelection().toString().trim();
   if (selectedText) {
     lastSelectedText = selectedText;
-    // 使用鼠标事件的位置来显示图标
-    const iconX = e.pageX - 14; // 图标宽度的一半，使其居中于鼠标位置
-    const iconY = e.pageY + 10; // 鼠标下方10px
+
+    // 获取鼠标位置
+    // const iconX = e.clientX + window.scrollX - 14;  // 图标宽度的一半
+    // const iconY = e.clientY + window.scrollY + 10;  // 下方偏移10px
+    // 获取当前距离
+    const iconX = e.clientX - 14;
+    const iconY = e.clientY + 10;
+    console.log('iconX', iconX);
+    console.log('iconY', iconY);
+
+    // 显示图标
     showIcon(iconX, iconY);
   }
 });
@@ -243,23 +251,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     showTranslation(request.text, rect.left + window.scrollX, rect.bottom + window.scrollY + 5);
   }
 });
-
-// 获取动词形式
-function getVerbForms(word) {
-  // 这里可以通过API获取动词变形，或者使用预定义的动词表
-  // 这是一个简单的示例
-  const verbForms = [
-    { label: '防止', forms: ['防止', '预防', '阻止', '避免', '制止', '避', '免除', '抵制', '杜', '警告', '戒'] }
-  ];
-
-  const matchedVerb = verbForms.find(v => v.label === word);
-  if (matchedVerb) {
-    return matchedVerb.forms.map(form => 
-      `<span style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">${form}</span>`
-    ).join('');
-  }
-  return '无相关动词形式';
-}
 
 // 词性标签转换
 function getPosLabel(pos) {
