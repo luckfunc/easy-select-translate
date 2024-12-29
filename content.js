@@ -81,32 +81,44 @@ async function showTranslation(text, x, y) {
   translatePopup.innerHTML = '<div>翻译中...</div>';
 
   try {
-    const translated = await fetchTranslation(text);
+    const translation = await fetchTranslation(text);
     
-    // 修改布局：原文 + 朗读按钮 + 翻译
     translatePopup.innerHTML = `
-      <div style="display: flex; align-items: center; margin-bottom: 10px; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
         <div style="color: #666;">${text}</div>
         <button id="speak-button" style="display: flex; align-items: center; padding: 3px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; background-color: transparent; color: #4285f4;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z"/>
           </svg>
         </button>
-        <span style="color: #999; margin: 0 4px;">→</span>
-        <div style="color: #333;">${translated || '翻译失败'}</div>
+        <span style="color: #999;">→</span>
+        <div style="color: #333;">${translation.text}</div>
       </div>
-      <div style="font-size: 13px; color: #666;">
-        <div style="margin-bottom: 5px;">动词:</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-          ${getVerbForms(text)}
+      ${translation.definitions.map(def => `
+        <div style="margin-top: 12px;">
+          <div style="color: #666; font-size: 13px; margin-bottom: 4px;">
+            ${getPosLabel(def.pos)}
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${def.meanings.map((meaning, index) => `
+              <div>
+                <div style="color: #333;">${index + 1}. ${meaning}</div>
+                ${def.examples[index] ? `
+                  <div style="color: #666; font-size: 12px; margin-top: 4px; font-style: italic;">
+                    例：${def.examples[index]}
+                  </div>
+                ` : ''}
+              </div>
+            `).join('')}
+          </div>
         </div>
-      </div>
+      `).join('')}
     `;
 
     const speakButton = document.getElementById('speak-button');
     speakButton.addEventListener('click', (e) => {
       e.stopPropagation();
-      speakText(text); // 朗读原文
+      speakText(text);
     });
   } catch (error) {
     translatePopup.innerHTML = '<div>翻译失败</div>';
@@ -116,8 +128,9 @@ async function showTranslation(text, x, y) {
 // 翻译功能
 async function fetchTranslation(text) {
   try {
+    // 添加更多的 dt 参数来获取完整的翻译信息
     const response = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&q=${encodeURIComponent(text)}`
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&q=${encodeURIComponent(text)}`
     );
 
     if (!response.ok) {
@@ -125,22 +138,84 @@ async function fetchTranslation(text) {
     }
 
     const result = await response.json();
-    if (result && result[0] && result[0][0] && result[0][0][0]) {
-      return result[0][0][0];
+    console.log('Translation API response:', result);
+
+    // 解析返回的数据
+    const translation = {
+      text: result[0][0][0], // 基本翻译
+      details: [], // 词性详细释义
+      definitions: [] // 详细解释
+    };
+
+    // 解析词性和释义（从第5个数组获取详细信息）
+    if (result[1]) {
+      result[1].forEach(item => {
+        if (item[0]) {
+          translation.details.push({
+            pos: item[0], // 词性
+            meanings: item[1] // 该词性下的各种含义
+          });
+        }
+      });
     }
 
-    throw new Error('Invalid response format');
+    // 解析详细释义（如果存在）
+    if (result[12]) {
+      result[12].forEach(item => {
+        if (item[0]) {
+          translation.definitions.push({
+            pos: item[0], // 词性
+            meanings: item[1], // 释义列表
+            examples: item[2] || [] // 示例（如果有）
+          });
+        }
+      });
+    }
+
+    return translation;
   } catch (error) {
-    throw new Error('Translation failed');
+    console.error('Translation API error:', error);
+    throw error;
   }
 }
 
 // 朗读文本
 function speakText(text) {
   if (!text) return;
+
+  // 停止当前正在播放的语音
+  window.speechSynthesis.cancel();
+
+  // 创建语音实例
   const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'zh-CN'; // 设置朗读语言，中文为 zh-CN
-  speechSynthesis.speak(utterance);
+  
+  // 获取可用的语音列表
+  const voices = window.speechSynthesis.getVoices();
+  
+  // 根据文本语言选择合适的语音
+  if (/^[\u4e00-\u9fa5]+$/.test(text)) {
+    // 如果是中文文本
+    const chineseVoice = voices.find(voice => voice.lang.includes('zh'));
+    if (chineseVoice) {
+      utterance.voice = chineseVoice;
+    }
+    utterance.lang = 'zh-CN';
+  } else {
+    // 如果是英文或其他语言
+    const englishVoice = voices.find(voice => voice.lang.includes('en'));
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+    utterance.lang = 'en-US';
+  }
+
+  // 设置语音参数
+  utterance.rate = 1.0;  // 语速
+  utterance.pitch = 1.0; // 音高
+  utterance.volume = 1.0; // 音量
+
+  // 播放语音
+  window.speechSynthesis.speak(utterance);
 }
 
 // 显示翻译图标
@@ -211,4 +286,19 @@ function getVerbForms(word) {
     ).join('');
   }
   return '无相关动词形式';
+}
+
+// 词性标签转换
+function getPosLabel(pos) {
+  const posMap = {
+    'noun': '名词',
+    'verb': '动词',
+    'adjective': '形容词',
+    'adverb': '副词',
+    'preposition': '介词',
+    'conjunction': '连词',
+    'pronoun': '代词',
+    'interjection': '感叹词'
+  };
+  return posMap[pos.toLowerCase()] || pos;
 }

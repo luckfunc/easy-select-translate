@@ -7,7 +7,8 @@
       "contextMenus",
       "storage",
       "scripting",
-      "activeTab"
+      "activeTab",
+      "tts"
     ],
     "background": {
       "service_worker": "background.js"
@@ -23,7 +24,9 @@
       }
     ],
     "host_permissions": [
-      "*://*.google.com/*"
+      "*://*.google.com/*",
+      "https://translate.googleapis.com/*",
+      "https://translate.google.com/*"
     ],
     "web_accessible_resources": [{
       "resources": ["icon.png"],
