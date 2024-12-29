@@ -94,22 +94,13 @@ async function showTranslation(text, x, y) {
         <span style="color: #999;">→</span>
         <div style="color: #333;">${translation.text}</div>
       </div>
-      ${translation.definitions.map(def => `
-        <div style="margin-top: 12px;">
+      ${Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
+        <div style="margin-top: 8px;">
           <div style="color: #666; font-size: 13px; margin-bottom: 4px;">
-            ${getPosLabel(def.pos)}
+            ${getPosLabel(pos)}
           </div>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            ${def.meanings.map((meaning, index) => `
-              <div>
-                <div style="color: #333;">${index + 1}. ${meaning}</div>
-                ${def.examples[index] ? `
-                  <div style="color: #666; font-size: 12px; margin-top: 4px; font-style: italic;">
-                    例：${def.examples[index]}
-                  </div>
-                ` : ''}
-              </div>
-            `).join('')}
+          <div style="color: #333;">
+            ${meanings.join('；')}
           </div>
         </div>
       `).join('')}
@@ -128,9 +119,8 @@ async function showTranslation(text, x, y) {
 // 翻译功能
 async function fetchTranslation(text) {
   try {
-    // 添加更多的 dt 参数来获取完整的翻译信息
     const response = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=bd&dt=ex&dt=ld&dt=md&dt=qca&dt=rw&dt=rm&dt=ss&q=${encodeURIComponent(text)}`
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=rm&dt=bd&q=${encodeURIComponent(text)}`
     );
 
     if (!response.ok) {
@@ -143,32 +133,15 @@ async function fetchTranslation(text) {
     // 解析返回的数据
     const translation = {
       text: result[0][0][0], // 基本翻译
-      details: [], // 词性详细释义
-      definitions: [] // 详细解释
+      partsOfSpeech: {} // 按词性分类的翻译
     };
 
-    // 解析词性和释义（从第5个数组获取详细信息）
+    // 解析词性和对应的翻译（从第1个数组获取）
     if (result[1]) {
       result[1].forEach(item => {
-        if (item[0]) {
-          translation.details.push({
-            pos: item[0], // 词性
-            meanings: item[1] // 该词性下的各种含义
-          });
-        }
-      });
-    }
-
-    // 解析详细释义（如果存在）
-    if (result[12]) {
-      result[12].forEach(item => {
-        if (item[0]) {
-          translation.definitions.push({
-            pos: item[0], // 词性
-            meanings: item[1], // 释义列表
-            examples: item[2] || [] // 示例（如果有）
-          });
-        }
+        const pos = item[0]; // 词性
+        const meanings = item[1]; // 该词性下的所有含义
+        translation.partsOfSpeech[pos] = meanings;
       });
     }
 
