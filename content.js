@@ -16,7 +16,7 @@ function createIcon() {
   // 设置初始样式
   icon.style.position = 'fixed';
   icon.style.background = 'white';
-  icon.style.borderRadius = '50%';
+  icon.style.borderRadius = '4px';
   icon.style.width = '28px';
   icon.style.height = '28px';
   icon.style.display = 'none';
@@ -51,19 +51,21 @@ function createPopup() {
   popup.style.cssText = `
     position: fixed;
     background: white;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     z-index: 999999;
-    max-width: 300px;
-    min-width: 200px;
+    max-width: 800px;
+    min-width: 280px;
     min-height: 50px;
     display: none;
     pointer-events: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     font-size: 14px;
-    line-height: 1.5;
-    border: 1px solid #e0e0e0;
+    line-height: 1.6;
+    border: 1px solid rgba(0, 0, 0, 0.06);
     color: #333;
+    backdrop-filter: blur(8px);
   `;
   document.body.appendChild(popup);
   return popup;
@@ -87,35 +89,44 @@ async function showTranslation(text, x, y) {
     const translation = await fetchTranslation(text);
     
     translatePopup.innerHTML = `
-      <div style='display: flex; align-items: center; gap: 8px; margin-bottom: 8px;'>
-        <div style='color: #666;'>${text}</div>
-        <button id='speak-button' style='display: flex; align-items: center; padding: 3px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; background-color: transparent; color: #4285f4;'>
-          <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'>
+      <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.06);'>
+        <div style='color: #1a73e8; font-weight: 500;'>${text}</div>
+        <button id='speak-button' style='display: flex; align-items: center; padding: 6px; font-size: 12px; cursor: pointer; border: none; border-radius: 6px; background-color: rgba(26, 115, 232, 0.05); color: #1a73e8; transition: all 0.2s ease;'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
             <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
           </svg>
         </button>
-        <span style='color: #999;'>→</span>
-        <div style='color: #333;'>${translation.text}</div>
+        <span style='color: #999; font-weight: 300;'>→</span>
+        <div style='color: #333; font-weight: 500;'>${translation.text}</div>
       </div>
       ${Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
-        <div style='margin-top: 8px;'>
-          <div style='color: #666; font-size: 13px; margin-bottom: 4px;'>
+        <div style='margin-top: 10px;'>
+          <div style='color: #666; font-size: 12px; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;'>
             ${getPosLabel(pos)}
           </div>
-          <div style='color: #333;'>
-            ${meanings.join('；')}
+          <div style='color: #444; display: flex; flex-wrap: wrap; gap: 8px;'>
+            ${meanings.map(meaning => 
+              `<span style='background: rgba(26, 115, 232, 0.05); padding: 4px 8px; border-radius: 6px; font-size: 13px;'>${meaning}</span>`
+            ).join('')}
           </div>
         </div>
       `).join('')}
     `;
 
+    // 添加按钮悬停效果
     const speakButton = document.getElementById('speak-button');
+    speakButton.addEventListener('mouseover', () => {
+      speakButton.style.backgroundColor = 'rgba(26, 115, 232, 0.1)';
+    });
+    speakButton.addEventListener('mouseout', () => {
+      speakButton.style.backgroundColor = 'rgba(26, 115, 232, 0.05)';
+    });
     speakButton.addEventListener('click', (e) => {
       e.stopPropagation();
       speakText(text);
     });
   } catch (error) {
-    translatePopup.innerHTML = '<div>翻译失败</div>';
+    translatePopup.innerHTML = '<div style="color: #d93025;">翻译失败</div>';
   }
 }
 

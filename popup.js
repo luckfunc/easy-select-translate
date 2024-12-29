@@ -1,8 +1,8 @@
-document.getElementById("translate").addEventListener("click", async () => {
-    const text = document.getElementById("input").value.trim();
+document.getElementById('translate').addEventListener('click', async () => {
+    const text = document.getElementById('input').value.trim();
     if (text) {
       const translated = await fetchTranslation(text);
-      document.getElementById("result").textContent = translated;
+      document.getElementById('result').textContent = translated;
     }
   });
   
