@@ -89,7 +89,7 @@ async function showTranslation(text, x, y) {
     const translation = await fetchTranslation(text);
     
     translatePopup.innerHTML = `
-      <div style='display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.06);'>
+      <div style='display: flex; align-items: center; gap: 12px; margin-bottom: ${Object.keys(translation.partsOfSpeech).length > 0 ? '12px' : '0'}; ${Object.keys(translation.partsOfSpeech).length > 0 ? 'padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.06);' : ''}'>
         <div style='color: #1a73e8; font-weight: 500;'>${text}</div>
         <button id='speak-button' style='display: flex; align-items: center; padding: 6px; font-size: 12px; cursor: pointer; border: none; border-radius: 6px; background-color: rgba(26, 115, 232, 0.05); color: #1a73e8; transition: all 0.2s ease;'>
           <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
@@ -99,18 +99,21 @@ async function showTranslation(text, x, y) {
         <span style='color: #999; font-weight: 300;'>→</span>
         <div style='color: #333; font-weight: 500;'>${translation.text}</div>
       </div>
-      ${Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
-        <div style='margin-top: 10px;'>
-          <div style='color: #666; font-size: 12px; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;'>
-            ${getPosLabel(pos)}
+      ${Object.keys(translation.partsOfSpeech).length > 0 ? 
+        Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
+          <div style='margin-top: 10px;'>
+            <div style='color: #666; font-size: 12px; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;'>
+              ${getPosLabel(pos)}
+            </div>
+            <div style='color: #444; display: flex; flex-wrap: wrap; gap: 8px;'>
+              ${meanings.map(meaning => 
+                `<span style='background: rgba(26, 115, 232, 0.05); padding: 4px 8px; border-radius: 6px; font-size: 13px;'>${meaning}</span>`
+              ).join('')}
+            </div>
           </div>
-          <div style='color: #444; display: flex; flex-wrap: wrap; gap: 8px;'>
-            ${meanings.map(meaning => 
-              `<span style='background: rgba(26, 115, 232, 0.05); padding: 4px 8px; border-radius: 6px; font-size: 13px;'>${meaning}</span>`
-            ).join('')}
-          </div>
-        </div>
-      `).join('')}
+        `).join('')
+        : ''
+      }
     `;
 
     // 添加按钮悬停效果
