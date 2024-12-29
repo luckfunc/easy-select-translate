@@ -37,7 +37,7 @@ function createIcon() {
     const textToTranslate = lastSelectedText || window.getSelection().toString().trim();
     if (textToTranslate) {
       icon.style.display = 'none';
-      await showTranslation(textToTranslate, e.clientX + window.scrollX, e.clientY + window.scrollY + 10);
+      await showTranslation(textToTranslate, e.clientX, e.clientY + 10);
     }
   });
 
@@ -76,12 +76,9 @@ async function showTranslation(text, x, y) {
   if (!translatePopup) {
     translatePopup = createPopup();
   }
-  const textLeft = x - window.scrollX;
-  const textTop = y - window.scrollY;
- 
   // 直接使用传入的坐标，因为我们需要的是相对于文档的绝对位置
-  translatePopup.style.left = `${textLeft}px`;
-  translatePopup.style.top = `${textTop}px`;
+  translatePopup.style.left = `${x}px`;
+  translatePopup.style.top = `${y}px`;
   translatePopup.style.display = 'block';
   translatePopup.innerHTML = '<div>翻译中...</div>';
 
