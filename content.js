@@ -227,9 +227,6 @@ document.addEventListener('mouseup', (e) => {
   if (selectedText) {
     lastSelectedText = selectedText;
 
-    // 获取鼠标位置
-    // const iconX = e.clientX + window.scrollX - 14;  // 图标宽度的一半
-    // const iconY = e.clientY + window.scrollY + 10;  // 下方偏移10px
     // 获取当前距离
     const iconX = e.clientX - 14;
     const iconY = e.clientY + 10;
