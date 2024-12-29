@@ -8,8 +8,8 @@ function createIcon() {
   const icon = document.createElement('div');
   icon.id = 'translate-icon';
   icon.innerHTML = `
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#4285f4">
-      <path d="M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+    <svg width='20' height='20' viewBox='0 0 24 24' fill='#4285f4'>
+      <path d='M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z'/>
     </svg>
   `;
   
@@ -36,7 +36,7 @@ function createIcon() {
 
     const textToTranslate = lastSelectedText || window.getSelection().toString().trim();
     if (textToTranslate) {
-      icon.style.display = 'none'; // 隐藏图标
+      icon.style.display = 'none';
       await showTranslation(textToTranslate, e.clientX + window.scrollX, e.clientY + window.scrollY + 10);
     }
   });
@@ -74,9 +74,12 @@ async function showTranslation(text, x, y) {
   if (!translatePopup) {
     translatePopup = createPopup();
   }
-
-  translatePopup.style.left = `${x}px`;
-  translatePopup.style.top = `${y}px`;
+  const textLeft = x - window.scrollX;
+  const textTop = y - window.scrollY;
+ 
+  // 直接使用传入的坐标，因为我们需要的是相对于文档的绝对位置
+  translatePopup.style.left = `${textLeft}px`;
+  translatePopup.style.top = `${textTop}px`;
   translatePopup.style.display = 'block';
   translatePopup.innerHTML = '<div>翻译中...</div>';
 
@@ -84,22 +87,22 @@ async function showTranslation(text, x, y) {
     const translation = await fetchTranslation(text);
     
     translatePopup.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <div style="color: #666;">${text}</div>
-        <button id="speak-button" style="display: flex; align-items: center; padding: 3px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; background-color: transparent; color: #4285f4;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z"/>
+      <div style='display: flex; align-items: center; gap: 8px; margin-bottom: 8px;'>
+        <div style='color: #666;'>${text}</div>
+        <button id='speak-button' style='display: flex; align-items: center; padding: 3px; font-size: 12px; cursor: pointer; border: none; border-radius: 3px; background-color: transparent; color: #4285f4;'>
+          <svg width='14' height='14' viewBox='0 0 24 24' fill='currentColor'>
+            <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
           </svg>
         </button>
-        <span style="color: #999;">→</span>
-        <div style="color: #333;">${translation.text}</div>
+        <span style='color: #999;'>→</span>
+        <div style='color: #333;'>${translation.text}</div>
       </div>
       ${Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
-        <div style="margin-top: 8px;">
-          <div style="color: #666; font-size: 13px; margin-bottom: 4px;">
+        <div style='margin-top: 8px;'>
+          <div style='color: #666; font-size: 13px; margin-bottom: 4px;'>
             ${getPosLabel(pos)}
           </div>
-          <div style="color: #333;">
+          <div style='color: #333;'>
             ${meanings.join('；')}
           </div>
         </div>
@@ -240,11 +243,13 @@ document.addEventListener('mouseup', (e) => {
 
 // 消息监听器
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "translate") {
+  if (request.action === 'translate') {
     const selection = window.getSelection();
     const range = selection.getRangeAt(0);
     const rect = range.getBoundingClientRect();
 
+    // 需要加上滚动偏移，因为 getBoundingClientRect 返回的是相对于视口的位置
+    
     showTranslation(request.text, rect.left + window.scrollX, rect.bottom + window.scrollY + 5);
   }
 });
