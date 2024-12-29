@@ -255,19 +255,6 @@ document.addEventListener('mouseup', (e) => {
   }
 });
 
-// 消息监听器
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'translate') {
-    const selection = window.getSelection();
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-
-    // 需要加上滚动偏移，因为 getBoundingClientRect 返回的是相对于视口的位置
-    
-    showTranslation(request.text, rect.left + window.scrollX, rect.bottom + window.scrollY + 5);
-  }
-});
-
 // 词性标签转换
 function getPosLabel(pos) {
   const posMap = {

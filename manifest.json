@@ -1,10 +1,9 @@
 {
     "manifest_version": 3,
     "name": "Easy Select Translate",
-    "version": "0.0.1",
+    "version": "0.0.3",
     "description": "Translate selected text using a translation API.",
     "permissions": [
-      "contextMenus",
       "storage",
       "scripting",
       "activeTab",
