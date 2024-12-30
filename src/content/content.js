@@ -42,9 +42,8 @@ async function showTranslation(text, x, y) {
     translatePopup = createPopup();
   }
 
-  // 先显示弹窗以获取其尺寸
   translatePopup.style.display = 'block';
-  translatePopup.style.visibility = 'hidden'; // 临时隐藏，避免闪烁
+  translatePopup.style.visibility = 'hidden';
   translatePopup.innerHTML = '<div>翻译中...</div>';
 
   // 获取视窗和弹窗尺寸
@@ -83,25 +82,23 @@ async function showTranslation(text, x, y) {
     const translation = await fetchTranslation(text);
 
     translatePopup.innerHTML = `
-      <div style='display: flex; align-items: center; gap: 12px; margin-bottom: ${Object.keys(translation.partsOfSpeech).length > 0 ? '12px' : '0'}; ${Object.keys(translation.partsOfSpeech).length > 0 ? 'padding-bottom: 12px; border-bottom: 1px solid rgba(0, 0, 0, 0.06);' : ''}'>
+      <div class='translation-header ${Object.keys(translation.partsOfSpeech).length > 0 ? 'with-parts' : ''}'>
         <div class='original-text'>${text}</div>
         <button id='speak-button'>
           <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
             <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
           </svg>
         </button>
-        <span style='color: #999; font-weight: 300;'>→</span>
-        <div style='color: #333; font-weight: 500;'>${translation.text}</div>
+        <span class='arrow-icon'>→</span>
+        <div class='translated-text'>${translation.text}</div>
       </div>
       ${Object.keys(translation.partsOfSpeech).length > 0 ? 
         Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
-          <div style='margin-top: 10px;'>
-            <div style='color: #666; font-size: 12px; font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;'>
-              ${getPosLabel(pos)}
-            </div>
-            <div style='color: #444; display: flex; flex-wrap: wrap; gap: 8px;'>
+          <div class='pos-section'>
+            <div class='pos-label'>${getPosLabel(pos)}</div>
+            <div class='meanings-container'>
               ${meanings.map(meaning => 
-                `<span style='background: rgba(26, 115, 232, 0.05); padding: 4px 8px; border-radius: 6px; font-size: 13px;'>${meaning}</span>`
+                `<span class='meaning-item'>${meaning}</span>`
               ).join('')}
             </div>
           </div>
@@ -110,20 +107,13 @@ async function showTranslation(text, x, y) {
       }
     `;
 
-    // 添加按钮悬停效果
     const speakButton = document.getElementById('speak-button');
-    speakButton.addEventListener('mouseover', () => {
-      speakButton.style.backgroundColor = 'rgba(26, 115, 232, 0.1)';
-    });
-    speakButton.addEventListener('mouseout', () => {
-      speakButton.style.backgroundColor = 'rgba(26, 115, 232, 0.05)';
-    });
     speakButton.addEventListener('click', (e) => {
       e.stopPropagation();
       speakText(text);
     });
   } catch (error) {
-    translatePopup.innerHTML = `<div style='color: #d93025;'>翻译失败</div>`;
+    translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
   }
 }
 
