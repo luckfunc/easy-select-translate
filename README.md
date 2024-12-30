@@ -5,7 +5,6 @@ A Chrome extension that allows users to quickly translate selected text on any w
 ## Features
 
 - Quick translation by text selection
-- Support for multiple languages
 - Text-to-speech functionality
 - Part of speech analysis
 - Clean and intuitive UI
