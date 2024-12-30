@@ -17,8 +17,8 @@ function createIcon() {
   icon.style.position = 'fixed';
   icon.style.background = 'white';
   icon.style.borderRadius = '4px';
-  icon.style.width = '28px';
-  icon.style.height = '28px';
+  icon.style.width = '24px';
+  icon.style.height = '24px';
   icon.style.display = 'none';
   icon.style.alignItems = 'center';
   icon.style.justifyContent = 'center';
@@ -55,7 +55,7 @@ function createPopup() {
     border-radius: 12px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
     z-index: 999999;
-    max-width: 800px;
+    max-width: 400px;
     min-width: 280px;
     min-height: 50px;
     display: none;
@@ -76,11 +76,43 @@ async function showTranslation(text, x, y) {
   if (!translatePopup) {
     translatePopup = createPopup();
   }
-  // 直接使用传入的坐标，因为我们需要的是相对于文档的绝对位置
-  translatePopup.style.left = `${x}px`;
-  translatePopup.style.top = `${y}px`;
+
+  // 先显示弹窗以获取其尺寸
   translatePopup.style.display = 'block';
+  translatePopup.style.visibility = 'hidden'; // 临时隐藏，避免闪烁
   translatePopup.innerHTML = '<div>翻译中...</div>';
+
+  // 获取视窗和弹窗尺寸
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const popupRect = translatePopup.getBoundingClientRect();
+  const popupWidth = popupRect.width;
+  const popupHeight = popupRect.height;
+
+  // 计算最终位置，确保不会溢出屏幕
+  let finalX = x;
+  let finalY = y;
+
+  // 处理水平方向
+  if (x + popupWidth > viewportWidth) {
+    finalX = viewportWidth - popupWidth - 20; // 20px 作为右边距
+  }
+  if (finalX < 0) {
+    finalX = 20; // 20px 作为左边距
+  }
+
+  // 处理垂直方向
+  if (y + popupHeight > viewportHeight) {
+    finalY = y - popupHeight - 10; // 向上显示，10px 作为偏移
+  }
+  if (finalY < 0) {
+    finalY = 20; // 20px 作为上边距
+  }
+
+  // 应用计算后的位置
+  translatePopup.style.left = `${finalX}px`;
+  translatePopup.style.top = `${finalY}px`;
+  translatePopup.style.visibility = 'visible';
 
   try {
     const translation = await fetchTranslation(text);
