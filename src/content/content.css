@@ -36,24 +36,12 @@
     backdrop-filter: blur(8px);
 }
 
-.translate-popup .translation-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.translate-popup .translation-header.with-parts {
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-}
-
 .translate-popup .original-text {
     color: #1a73e8;
     font-weight: 500;
 }
 
-.translate-popup .speak-button {
+.translate-popup #speak-button {
     display: flex;
     align-items: center;
     padding: 6px;
@@ -66,6 +54,6 @@
     transition: all 0.2s ease;
 }
 
-.translate-popup .speak-button:hover {
+.translate-popup #speak-button:hover {
     background-color: rgba(26, 115, 232, 0.1);
 }
