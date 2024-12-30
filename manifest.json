@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Easy Select Translate",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Translate selected text using a translation API.",
     "permissions": [
       "scripting",
@@ -31,4 +31,3 @@
       "matches": ["<all_urls>"]
     }]
   }
-  
