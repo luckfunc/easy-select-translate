@@ -13,23 +13,6 @@ function createIcon() {
     </svg>
   `;
 
-  // 设置初始样式
-  icon.style.position = 'fixed';
-  icon.style.background = 'white';
-  icon.style.borderRadius = '4px';
-  icon.style.width = '24px';
-  icon.style.height = '24px';
-  icon.style.display = 'none';
-  icon.style.alignItems = 'center';
-  icon.style.justifyContent = 'center';
-  icon.style.cursor = 'pointer';
-  icon.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)';
-  icon.style.zIndex = '999999';
-  icon.style.pointerEvents = 'auto';
-  icon.style.opacity = '0';
-  icon.style.transform = 'translateY(-10px)';
-  icon.style.transition = 'all 0.2s ease';
-
   icon.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -47,27 +30,9 @@ function createIcon() {
 
 // 创建翻译弹窗
 function createPopup() {
-  const popup = document.createElement('div');
-  popup.style.cssText = `
-    position: fixed;
-    background: white;
-    padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    z-index: 999999;
-    max-width: 400px;
-    min-width: 280px;
-    min-height: 50px;
-    display: none;
-    pointer-events: auto;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    color: #333;
-    backdrop-filter: blur(8px);
-  `;
-  document.body.appendChild(popup);
+	const popup = document.createElement('div');
+	popup.classList.add('translate-popup');
+	document.body.appendChild(popup);
   return popup;
 }
 
@@ -158,7 +123,7 @@ async function showTranslation(text, x, y) {
       speakText(text);
     });
   } catch (error) {
-    translatePopup.innerHTML = '<div style="color: #d93025;">翻译失败</div>';
+    translatePopup.innerHTML = `<div style='color: #d93025;'>翻译失败</div>`;
   }
 }
 

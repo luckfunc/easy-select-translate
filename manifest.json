@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Easy Select Translate",
-    "version": "0.0.6",
+    "version": "0.0.8",
     "description": "Translate selected text using a translation API.",
     "permissions": [
       "scripting",
@@ -9,16 +9,17 @@
       "tts"
     ],
     "background": {
-      "service_worker": "background.js"
+      "service_worker": "src/background/background.js"
     },
     "action": {
-      "default_popup": "popup.html",
-      "default_icon": "icon.png"
+      "default_popup": "src/popup/popup.html",
+      "default_icon": "assets/icons/icon.png"
     },
     "content_scripts": [
       {
         "matches": ["<all_urls>"],
-        "js": ["content.js"]
+        "js": ["src/content/content.js"],
+        "css": ["src/content/content.css"]
       }
     ],
     "host_permissions": [
@@ -27,7 +28,7 @@
       "https://translate.google.com/*"
     ],
     "web_accessible_resources": [{
-      "resources": ["icon.png"],
+      "resources": ["assets/icons/icon.png"],
       "matches": ["<all_urls>"]
     }]
   }
