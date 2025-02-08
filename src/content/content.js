@@ -83,13 +83,14 @@ async function showTranslation(text, x, y) {
 
     translatePopup.innerHTML = `
       <div class='translation-header ${Object.keys(translation.partsOfSpeech).length > 0 ? 'with-parts' : ''}'>
-        <div class='original-text'>${text}</div>
-        <button id='speak-button'>
-          <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
-            <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
-          </svg>
-        </button>
-        <span class='arrow-icon'>→</span>
+        <div class='original-text-container'>
+          <div class='original-text'>${text}</div>
+          <button id='speak-button'>
+            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+              <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
+            </svg>
+          </button>
+        </div>
         <div class='translated-text'>${translation.text}</div>
       </div>
       ${Object.keys(translation.partsOfSpeech).length > 0 ? 
