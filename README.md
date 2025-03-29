@@ -8,7 +8,8 @@ A Chrome extension that allows users to quickly translate selected text on any w
 - Text-to-speech functionality
 - Part of speech analysis
 - Clean and intuitive UI
-
+## Preview
+![Preview](./assets/readme-preview.png)
 ## Installation
 
 1. Clone this repository
