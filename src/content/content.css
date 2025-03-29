@@ -7,10 +7,11 @@
 	z-index: 999999;
 	justify-content: center;
 	align-items: center;
-	background: white;
-	border-radius: 4px;
+	background: #1E1E1E;
+	color: #E0E0E0;
+	border-radius: 6px;
 	cursor: pointer;
-	box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+	box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 	pointer-events: auto;
 	transform: translateY(-10px);
 	transition: all 0.2s ease;
@@ -23,29 +24,26 @@
 	max-height: 400px;
 	z-index: 999999;
 	padding: 16px;
-	background: white;
+	background: #121212;
 	border-radius: 12px;
-	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 	font-size: 14px;
 	line-height: 1.6;
-	border: 1px solid rgba(0, 0, 0, 0.06);
-	color: #333;
+	border: 1px solid #2A2A2A;
+	color: #E0E0E0;
 	backdrop-filter: blur(8px);
 	overflow-y: auto;
 }
 
-/* 自定义滚动条样式 */
 .translate-popup::-webkit-scrollbar {
 	width: 6px;
 }
-
 .translate-popup::-webkit-scrollbar-track {
 	background: transparent;
 }
-
 .translate-popup::-webkit-scrollbar-thumb {
-	background-color: rgba(0, 0, 0, 0.1);
+	background-color: rgba(255, 255, 255, 0.1);
 	border-radius: 3px;
 }
 
@@ -55,11 +53,10 @@
 	gap: 8px;
 }
 
-/* 只在有词性解释时显示边框和边距 */
 .with-parts {
 	padding-bottom: 12px;
 	margin-bottom: 12px;
-	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	border-bottom: 1px solid #2A2A2A;
 }
 
 .original-text-container {
@@ -70,15 +67,16 @@
 }
 
 .original-text {
-	color: #1a73e8;
+	color: #00C27A;
 	font-size: 15px;
 	line-height: 1.6;
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+
 .translated-text {
 	padding: 0 4px;
-	color: #333;
+	color: #E0E0E0;
 	font-weight: 500;
 }
 
@@ -92,14 +90,14 @@
 	padding: 6px;
 	border: none;
 	border-radius: 6px;
-	background-color: rgba(26, 115, 232, 0.05);
-	color: #1a73e8;
+	background-color: #1A1A1A;
+	color: #00C27A;
 	cursor: pointer;
 	transition: all 0.2s ease;
 }
 
 #speak-button:hover {
-	background-color: rgba(26, 115, 232, 0.1);
+	background-color: #2A2A2A;
 }
 
 .pos-section {
@@ -107,7 +105,7 @@
 }
 
 .pos-label {
-	color: #666;
+	color: #AAAAAA;
 	font-size: 13px;
 	font-weight: 500;
 	margin-bottom: 6px;
@@ -121,12 +119,12 @@
 
 .meaning-item {
 	padding: 4px 8px;
-	border-radius: 4px;
+	border-radius: 6px;
 	font-size: 13px;
-	background: rgba(26, 115, 232, 0.05);
-	color: #444;
+	background: #2A2A2A;
+	color: #E0E0E0;
 }
 
 .translation-error {
-	color: #d93025;
+	color: #EF5350;
 }
