@@ -1,253 +1,274 @@
-let translatePopup = null;
-let translateIcon = null;
-let isSelecting = false;
-let lastSelectedText = ''; // 存储选中的原始文本
+/**
+ * 网页划词翻译扩展
+ * 功能：在鼠标选择文本后显示翻译图标，点击后显示翻译弹窗，支持词性解析和语音朗读
+ */
+class TextTranslator {
+	// 模块常量
+	static POS_LABELS = {
+		noun: '名词',
+		verb: '动词',
+		adjective: '形容词',
+		adverb: '副词',
+		preposition: '介词',
+		conjunction: '连词',
+		pronoun: '代词',
+		interjection: '感叹词'
+	};
 
-// 创建翻译图标
-function createIcon() {
-  const icon = document.createElement('div');
-  icon.id = 'translate-icon';
-  icon.innerHTML = `
-    <svg width='20' height='20' viewBox='0 0 24 24' fill='#4285f4'>
-      <path d='M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z'/>
-    </svg>
-  `;
+	// 模块状态
+	constructor() {
+		this.translatePopup = null;
+		this.translateIcon = null;
+		this.lastSelectedText = '';
+		this.initEventListeners();
+	}
 
-  icon.addEventListener('click', async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+	// 初始化事件监听
+	initEventListeners() {
+		document.addEventListener('mousedown', this.handleDocumentMouseDown);
+		document.addEventListener('mouseup', this.handleDocumentMouseUp);
+	}
 
-    const textToTranslate = lastSelectedText || window.getSelection().toString().trim();
-    if (textToTranslate) {
-      icon.style.display = 'none';
-      await showTranslation(textToTranslate, e.clientX, e.clientY + 10);
-    }
-  });
+	// 事件处理器：鼠标按下
+	handleDocumentMouseDown = (event) => {
+		if (this.isUIElementClicked(event.target)) return;
+		this.hideUIElements();
+	}
 
-  document.body.appendChild(icon);
-  return icon;
-}
+	// 事件处理器：鼠标释放
+	handleDocumentMouseUp = (event) => {
+		const selection = window.getSelection().toString().trim();
 
-// 创建翻译弹窗
-function createPopup() {
-	const popup = document.createElement('div');
-	popup.classList.add('translate-popup');
-	document.body.appendChild(popup);
-  return popup;
-}
+		if (selection) {
+			this.lastSelectedText = selection;
+			this.showTranslationIcon(event.clientX, event.clientY);
+		}
+	}
 
-// 显示翻译结果
-async function showTranslation(text, x, y) {
-  if (!translatePopup) {
-    translatePopup = createPopup();
-  }
+	getIconSVG() {
+		return `
+      <svg width='20' height='20' viewBox='0 0 24 24' fill='#4285f4'>
+        <path d='M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z'/>
+      </svg>
+    `;
+	}
 
-  translatePopup.style.display = 'block';
-  translatePopup.style.visibility = 'hidden';
-  translatePopup.innerHTML = '<div>翻译中...</div>';
+	/* ========== UI 组件管理 ========== */
+	// 创建翻译图标
+	createTranslationIcon() {
+		const icon = document.createElement('div');
+		icon.id = 'translate-icon';
+		icon.innerHTML = this.getIconSVG();
+		icon.addEventListener('click', this.handleIconClick);
+		document.body.appendChild(icon);
+		return icon;
+	}
 
-  // 获取视窗和弹窗尺寸
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const popupRect = translatePopup.getBoundingClientRect();
-  const popupWidth = popupRect.width;
-  const popupHeight = popupRect.height;
+	// 新增错误提示方法
+	showErrorMessage() {
+		this.translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
+	}
 
-  // 计算最终位置，确保不会溢出屏幕
-  let finalX = x;
-  let finalY = y;
 
-  // 处理水平方向
-  if (x + popupWidth > viewportWidth) {
-    finalX = viewportWidth - popupWidth - 20; // 20px 作为右边距
-  }
-  if (finalX < 0) {
-    finalX = 20; // 20px 作为左边距
-  }
+	// 创建翻译弹窗
+	createTranslationPopup() {
+		const popup = document.createElement('div');
+		popup.className = 'translate-popup';
+		document.body.appendChild(popup);
+		return popup;
+	}
 
-  // 处理垂直方向
-  if (y + popupHeight > viewportHeight) {
-    finalY = y - popupHeight - 10; // 向上显示，10px 作为偏移
-  }
-  if (finalY < 0) {
-    finalY = 20; // 20px 作为上边距
-  }
+	// 显示翻译图标
+	showTranslationIcon(x, y) {
+		if (!this.translateIcon) {
+			this.translateIcon = this.createTranslationIcon();
+		}
 
-  // 应用计算后的位置
-  translatePopup.style.left = `${finalX}px`;
-  translatePopup.style.top = `${finalY}px`;
-  translatePopup.style.visibility = 'visible';
+		Object.assign(this.translateIcon.style, {
+			left: `${x - 14}px`,
+			top: `${y + 10}px`,
+			display: 'flex',
+			opacity: '1',
+			transform: 'translateY(0)'
+		});
+	}
 
-  try {
-    const translation = await fetchTranslation(text);
-
-    translatePopup.innerHTML = `
-      <div class='translation-header ${Object.keys(translation.partsOfSpeech).length > 0 ? 'with-parts' : ''}'>
-        <div class='original-text-container'>
-          <div class='original-text'>${text}</div>
-          <button id='speak-button'>
-            <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
-              <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
-            </svg>
-          </button>
-        </div>
-        <div class='translated-text'>${translation.text}</div>
+	// 更新弹窗内容
+	updatePopupContent(translationResult, originalText) {
+		this.translatePopup.innerHTML = `
+      <div class="translation-header ${translationResult.hasPartsOfSpeech ? 'with-parts' : ''}">
+        ${this.createHeaderContent(originalText, translationResult.text)}
       </div>
-      ${Object.keys(translation.partsOfSpeech).length > 0 ? 
-        Object.entries(translation.partsOfSpeech).map(([pos, meanings]) => `
-          <div class='pos-section'>
-            <div class='pos-label'>${getPosLabel(pos)}</div>
-            <div class='meanings-container'>
-              ${meanings.map(meaning => 
-                `<span class='meaning-item'>${meaning}</span>`
-              ).join('')}
-            </div>
-          </div>
-        `).join('')
-        : ''
-      }
+      ${translationResult.hasPartsOfSpeech ? this.createPartsOfSpeechHTML(translationResult.partsOfSpeech) : ''}
     `;
 
-    const speakButton = document.getElementById('speak-button');
-    speakButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      speakText(text);
-    });
-  } catch (error) {
-    translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
-  }
+		this.addSpeechHandler(originalText);
+	}
+
+	/* ========== 核心功能 ========== */
+	// 处理翻译图标点击
+	handleIconClick = async (event) => {
+		event.preventDefault();
+		event.stopPropagation();
+
+		const text = this.lastSelectedText;
+		if (!text) return;
+
+		this.translateIcon.style.display = 'none';
+		await this.showTranslation(text, event.clientX, event.clientY + 10);
+	}
+
+	// 显示翻译弹窗
+	async showTranslation(text, x, y) {
+		if (!this.translatePopup) {
+			this.translatePopup = this.createTranslationPopup();
+		}
+
+		this.initializePopupPosition(x, y);
+
+		try {
+			const translationResult = await this.fetchTranslation(text);
+			this.updatePopupContent(translationResult, text);
+		} catch (error) {
+			this.showErrorMessage();
+		}
+	}
+
+	// 获取翻译结果
+	async fetchTranslation(text) {
+		try {
+			const response = await fetch(this.buildAPIUrl(text));
+			if (!response.ok) throw new Error(`HTTP错误 ${response.status}`);
+			return this.parseTranslationData(await response.json());
+		} catch (error) {
+			console.error('翻译失败:', error);
+			throw error;
+		}
+	}
+
+	/* ========== 工具方法 ========== */
+	// 构建Google翻译API URL
+	buildAPIUrl(text) {
+		return `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=rm&dt=bd&q=${encodeURIComponent(text)}`;
+	}
+
+	// 解析翻译API响应
+	parseTranslationData(apiResponse) {
+		const result = {
+			text: apiResponse[0][0][0],
+			partsOfSpeech: {},
+			hasPartsOfSpeech: false
+		};
+
+		if (apiResponse[1]) {
+			apiResponse[1].forEach(([partOfSpeech, meanings]) => {
+				result.partsOfSpeech[partOfSpeech] = meanings;
+			});
+			result.hasPartsOfSpeech = Object.keys(result.partsOfSpeech).length > 0;
+		}
+
+		return result;
+	}
+
+	// 获取词性中文标签
+	getLocalizedPartOfSpeech(pos) {
+		return TextTranslator.POS_LABELS[pos.toLowerCase()] || pos;
+	}
+
+	// 创建词性区块HTML
+	createPartsOfSpeechHTML(parts) {
+		return Object.entries(parts).map(([pos, meanings]) => `
+      <div class="pos-section">
+        <div class="pos-label">${this.getLocalizedPartOfSpeech(pos)}</div>
+        <div class="meanings-container">
+          ${meanings.map(m => `<span class="meaning-item">${m}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+	}
+
+	// 新增缺失的方法
+	isUIElementClicked(targetElement) {
+		return (
+			(this.translateIcon && this.translateIcon.contains(targetElement)) ||
+			(this.translatePopup && this.translatePopup.contains(targetElement))
+		);
+	}
+
+	// 修改后的 hideUIElements 方法
+	hideUIElements() {
+		if (this.translateIcon) this.translateIcon.style.display = 'none';
+		if (this.translatePopup) this.translatePopup.style.display = 'none';
+	}
+
+	// 新增语音处理逻辑
+	addSpeechHandler(text) {
+		const speakButton = this.translatePopup.querySelector('#speak-button');
+		if (speakButton) {
+			speakButton.addEventListener('click', (e) => {
+				e.stopPropagation();
+				this.speakText(text);
+			});
+		}
+	}
+
+	// 新增语音朗读功能
+	speakText(text) {
+		if (!text) return;
+		window.speechSynthesis.cancel();
+		const utterance = new SpeechSynthesisUtterance(text);
+		window.speechSynthesis.speak(utterance);
+	}
+
+	// 新增弹窗头部内容生成
+	createHeaderContent(originalText, translatedText) {
+		return `
+      <div class='original-text-container'>
+        <div class='original-text'>${originalText}</div>
+        <button id='speak-button'>
+          <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
+            <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
+          </svg>
+        </button>
+      </div>
+      <div class='translated-text'>${translatedText}</div>
+    `;
+	}
+
+	// 修正弹窗位置初始化
+	initializePopupPosition(x, y) {
+		this.translatePopup.style.display = 'block';
+		this.translatePopup.style.visibility = 'hidden';
+		this.translatePopup.innerHTML = '<div>翻译中...</div>';
+
+		// 延迟获取正确尺寸
+		requestAnimationFrame(() => {
+			const popupRect = this.translatePopup.getBoundingClientRect();
+			const viewportWidth = window.innerWidth;
+			const viewportHeight = window.innerHeight;
+
+			// 位置计算逻辑
+			let finalX = x;
+			let finalY = y;
+
+			if (x + popupRect.width > viewportWidth) {
+				finalX = viewportWidth - popupRect.width - 20;
+			}
+			finalX = Math.max(20, finalX);
+
+			if (y + popupRect.height > viewportHeight) {
+				finalY = y - popupRect.height - 10;
+			}
+			finalY = Math.max(20, finalY);
+
+			Object.assign(this.translatePopup.style, {
+				left: `${finalX}px`,
+				top: `${finalY}px`,
+				visibility: 'visible'
+			});
+		});
+	}
 }
 
-// 翻译功能
-async function fetchTranslation(text) {
-  try {
-    const response = await fetch(
-      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=rm&dt=bd&q=${encodeURIComponent(text)}`
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    // 解析返回的数据
-    const translation = {
-      text: result[0][0][0], // 基本翻译
-      partsOfSpeech: {} // 按词性分类的翻译
-    };
-
-    // 解析词性和对应的翻译（从第1个数组获取）
-    if (result[1]) {
-      result[1].forEach(item => {
-        const pos = item[0]; // 词性
-        const meanings = item[1]; // 该词性下的所有含义
-        translation.partsOfSpeech[pos] = meanings;
-      });
-    }
-
-    return translation;
-  } catch (error) {
-    console.error('Translation API error:', error);
-    throw error;
-  }
-}
-
-// 朗读文本
-function speakText(text) {
-  if (!text) return;
-
-  // 停止当前正在播放的语音
-  window.speechSynthesis.cancel();
-
-  // 创建语音实例
-  const utterance = new SpeechSynthesisUtterance(text);
-
-  // 获取可用的语音列表
-  const voices = window.speechSynthesis.getVoices();
-
-  // 根据文本语言选择合适的语音
-  if (/^[\u4e00-\u9fa5]+$/.test(text)) {
-    // 如果是中文文本
-    const chineseVoice = voices.find(voice => voice.lang.includes('zh'));
-    if (chineseVoice) {
-      utterance.voice = chineseVoice;
-    }
-    utterance.lang = 'zh-CN';
-  } else {
-    // 如果是英文或其他语言
-    const englishVoice = voices.find(voice => voice.lang.includes('en'));
-    if (englishVoice) {
-      utterance.voice = englishVoice;
-    }
-    utterance.lang = 'en-US';
-  }
-
-  // 设置语音参数
-  utterance.rate = 1.0;  // 语速
-  utterance.pitch = 1.0; // 音高
-  utterance.volume = 1.0; // 音量
-
-  // 播放语音
-  window.speechSynthesis.speak(utterance);
-}
-
-// 显示翻译图标
-function showIcon(x, y) {
-  if (!translateIcon) {
-    translateIcon = createIcon();
-  }
-
-  // 直接使用传入的坐标，不做复杂的计算
-  translateIcon.style.left = `${x}px`;
-  translateIcon.style.top = `${y}px`;
-  translateIcon.style.display = 'flex';
-  translateIcon.style.opacity = '1';
-  translateIcon.style.transform = 'translateY(0)';
-}
-
-// 隐藏所有元素
-function hideElements() {
-  if (translateIcon) translateIcon.style.display = 'none';
-  if (translatePopup) translatePopup.style.display = 'none';
-}
-
-// 监听鼠标操作
-document.addEventListener('mousedown', (e) => {
-  if ((translateIcon && translateIcon.contains(e.target)) ||
-      (translatePopup && translatePopup.contains(e.target))) {
-    return;
-  }
-  isSelecting = true;
-  hideElements();
-});
-
-document.addEventListener('mouseup', (e) => {
-  isSelecting = false;
-  const selectedText = window.getSelection().toString().trim();
-  if (selectedText) {
-    lastSelectedText = selectedText;
-
-    // 获取当前距离
-    const iconX = e.clientX - 14;
-    const iconY = e.clientY + 10;
-
-    // 显示图标
-    showIcon(iconX, iconY);
-  }
-});
-
-// 词性标签转换
-function getPosLabel(pos) {
-  const posMap = {
-    'noun': '名词',
-    'verb': '动词',
-    'adjective': '形容词',
-    'adverb': '副词',
-    'preposition': '介词',
-    'conjunction': '连词',
-    'pronoun': '代词',
-    'interjection': '感叹词'
-  };
-  return posMap[pos.toLowerCase()] || pos;
-}
+// 初始化翻译器实例
+new TextTranslator();
