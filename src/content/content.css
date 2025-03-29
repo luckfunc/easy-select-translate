@@ -1,132 +1,132 @@
 #translate-icon {
-    position: fixed;
-    display: none;
-    width: 24px;
-    height: 24px;
-    opacity: 0;
-    z-index: 999999;
-    justify-content: center;
-    align-items: center;
-    background: white;
-    border-radius: 4px;
-    cursor: pointer;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    pointer-events: auto;
-    transform: translateY(-10px);
-    transition: all 0.2s ease;
+	position: fixed;
+	display: none;
+	width: 24px;
+	height: 24px;
+	opacity: 0;
+	z-index: 999999;
+	justify-content: center;
+	align-items: center;
+	background: white;
+	border-radius: 4px;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+	pointer-events: auto;
+	transform: translateY(-10px);
+	transition: all 0.2s ease;
 }
 
 .translate-popup {
-    position: fixed;
-    display: none;
-    width: 320px;
-    max-height: 400px;
-    z-index: 999999;
-    padding: 16px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    color: #333;
-    backdrop-filter: blur(8px);
-    overflow-y: auto;
+	position: fixed;
+	display: none;
+	width: 320px;
+	max-height: 400px;
+	z-index: 999999;
+	padding: 16px;
+	background: white;
+	border-radius: 12px;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	font-size: 14px;
+	line-height: 1.6;
+	border: 1px solid rgba(0, 0, 0, 0.06);
+	color: #333;
+	backdrop-filter: blur(8px);
+	overflow-y: auto;
 }
 
 /* 自定义滚动条样式 */
 .translate-popup::-webkit-scrollbar {
-    width: 6px;
+	width: 6px;
 }
 
 .translate-popup::-webkit-scrollbar-track {
-    background: transparent;
+	background: transparent;
 }
 
 .translate-popup::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
-    border-radius: 3px;
+	background-color: rgba(0, 0, 0, 0.1);
+	border-radius: 3px;
 }
 
 .translation-header {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
 }
 
 /* 只在有词性解释时显示边框和边距 */
 .with-parts {
-    padding-bottom: 12px;
-    margin-bottom: 12px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+	padding-bottom: 12px;
+	margin-bottom: 12px;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .original-text-container {
-    position: relative;
-    width: 100%;
-    padding-left: 4px;
-    padding-right: 36px;
+	position: relative;
+	width: 100%;
+	padding-left: 4px;
+	padding-right: 36px;
 }
 
 .original-text {
-    color: #1a73e8;
-    font-size: 15px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
+	color: #1a73e8;
+	font-size: 15px;
+	line-height: 1.6;
+	white-space: pre-wrap;
+	word-break: break-word;
 }
 .translated-text {
-    padding: 0 4px;
-    color: #333;
-    font-weight: 500;
+	padding: 0 4px;
+	color: #333;
+	font-weight: 500;
 }
 
 #speak-button {
-    position: absolute;
-    display: flex;
-    right: 0;
-    top: 2px;
-    align-items: center;
-    justify-content: center;
-    padding: 6px;
-    border: none;
-    border-radius: 6px;
-    background-color: rgba(26, 115, 232, 0.05);
-    color: #1a73e8;
-    cursor: pointer;
-    transition: all 0.2s ease;
+	position: absolute;
+	display: flex;
+	right: 0;
+	top: 2px;
+	align-items: center;
+	justify-content: center;
+	padding: 6px;
+	border: none;
+	border-radius: 6px;
+	background-color: rgba(26, 115, 232, 0.05);
+	color: #1a73e8;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 #speak-button:hover {
-    background-color: rgba(26, 115, 232, 0.1);
+	background-color: rgba(26, 115, 232, 0.1);
 }
 
 .pos-section {
-    margin-top: 12px;
+	margin-top: 12px;
 }
 
 .pos-label {
-    color: #666;
-    font-size: 13px;
-    font-weight: 500;
-    margin-bottom: 6px;
+	color: #666;
+	font-size: 13px;
+	font-weight: 500;
+	margin-bottom: 6px;
 }
 
 .meanings-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
 }
 
 .meaning-item {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 13px;
-    background: rgba(26, 115, 232, 0.05);
-    color: #444;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 13px;
+	background: rgba(26, 115, 232, 0.05);
+	color: #444;
 }
 
 .translation-error {
-    color: #d93025;
+	color: #d93025;
 }
