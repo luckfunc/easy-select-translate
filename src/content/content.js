@@ -69,7 +69,6 @@ class TextTranslator {
 		this.translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
 	}
 
-
 	// 创建翻译弹窗
 	createTranslationPopup() {
 		const popup = document.createElement('div');
@@ -96,7 +95,7 @@ class TextTranslator {
 	// 更新弹窗内容
 	updatePopupContent(translationResult, originalText) {
 		this.translatePopup.innerHTML = `
-      <div class="translation-header ${translationResult.hasPartsOfSpeech ? 'with-parts' : ''}">
+      <div class='translation-header ${translationResult.hasPartsOfSpeech ? 'with-parts' : ''}'>
         ${this.createHeaderContent(originalText, translationResult.text)}
       </div>
       ${translationResult.hasPartsOfSpeech ? this.createPartsOfSpeechHTML(translationResult.partsOfSpeech) : ''}
@@ -178,10 +177,10 @@ class TextTranslator {
 	// 创建词性区块HTML
 	createPartsOfSpeechHTML(parts) {
 		return Object.entries(parts).map(([pos, meanings]) => `
-      <div class="pos-section">
-        <div class="pos-label">${this.getLocalizedPartOfSpeech(pos)}</div>
-        <div class="meanings-container">
-          ${meanings.map(m => `<span class="meaning-item">${m}</span>`).join('')}
+      <div class='pos-section'>
+        <div class='pos-label'>${this.getLocalizedPartOfSpeech(pos)}</div>
+        <div class='meanings-container'>
+          ${meanings.map(m => `<span class='meaning-item'>${m}</span>`).join('')}
         </div>
       </div>
     `).join('');
