@@ -9,7 +9,7 @@ A Chrome extension that allows users to quickly translate selected text on any w
 - Part of speech analysis
 - Clean and intuitive UI
 ## Preview
-![Preview](./assets/preview-readme.png)
+![Preview](assets/preview-readme.png)
 ## Installation
 
 1. Clone this repository
