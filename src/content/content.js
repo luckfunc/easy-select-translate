@@ -20,6 +20,7 @@ class TextTranslator {
 		this.translatePopup = null;
 		this.translateIcon = null;
 		this.lastSelectedText = '';
+		this.lastPopupAnchor = null;
 		this.initEventListeners();
 	}
 
@@ -47,10 +48,10 @@ class TextTranslator {
 
 	getIconSVG() {
 		return `
-      <svg width='20' height='20' viewBox='0 0 24 24' fill='#4285f4'>
-        <path d='M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z'/>
-      </svg>
-    `;
+	      <svg width='20' height='20' viewBox='0 0 24 24' fill='currentColor'>
+	        <path d='M12.87 15.07l-2.54-2.51.03-.03A17.52 17.52 0 0014.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z'/>
+	      </svg>
+	    `;
 	}
 
 	/* ========== UI 组件管理 ========== */
@@ -67,6 +68,7 @@ class TextTranslator {
 	// 新增错误提示方法
 	showErrorMessage() {
 		this.translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
+		this.repositionPopup();
 	}
 
 	// 创建翻译弹窗
@@ -83,9 +85,16 @@ class TextTranslator {
 			this.translateIcon = this.createTranslationIcon();
 		}
 
+		const viewportWidth = window.innerWidth;
+		const viewportHeight = window.innerHeight;
+		const iconSize = 24;
+		const margin = 8;
+		const finalX = Math.min(Math.max(x - 14, margin), viewportWidth - iconSize - margin);
+		const finalY = Math.min(Math.max(y + 10, margin), viewportHeight - iconSize - margin);
+
 		Object.assign(this.translateIcon.style, {
-			left: `${x - 14}px`,
-			top: `${y + 10}px`,
+			left: `${finalX}px`,
+			top: `${finalY}px`,
 			display: 'flex',
 			opacity: '1',
 			transform: 'translateY(0)'
@@ -102,6 +111,7 @@ class TextTranslator {
     `;
 
 		this.addSpeechHandler(originalText);
+		this.repositionPopup();
 	}
 
 	/* ========== 核心功能 ========== */
@@ -122,6 +132,8 @@ class TextTranslator {
 		if (!this.translatePopup) {
 			this.translatePopup = this.createTranslationPopup();
 		}
+
+		this.lastPopupAnchor = { x, y };
 
 		this.initializePopupPosition(x, y);
 
@@ -242,29 +254,43 @@ class TextTranslator {
 
 		// 延迟获取正确尺寸
 		requestAnimationFrame(() => {
-			const popupRect = this.translatePopup.getBoundingClientRect();
-			const viewportWidth = window.innerWidth;
-			const viewportHeight = window.innerHeight;
+			this.positionPopup(x, y);
+			this.translatePopup.style.visibility = 'visible';
+		});
+	}
 
-			// 位置计算逻辑
-			let finalX = x;
-			let finalY = y;
+	positionPopup(x, y) {
+		if (!this.translatePopup) return;
+		const popupRect = this.translatePopup.getBoundingClientRect();
+		const viewportWidth = window.innerWidth;
+		const viewportHeight = window.innerHeight;
+		const margin = 16;
+		const gap = 12;
 
-			if (x + popupRect.width > viewportWidth) {
-				finalX = viewportWidth - popupRect.width - 20;
-			}
-			finalX = Math.max(20, finalX);
+		let finalX = Math.min(Math.max(x, margin), viewportWidth - popupRect.width - margin);
+		let finalY = y;
 
-			if (y + popupRect.height > viewportHeight) {
-				finalY = y - popupRect.height - 10;
-			}
-			finalY = Math.max(20, finalY);
+		const fitsBelow = y + popupRect.height <= viewportHeight - margin;
+		const fitsAbove = y - popupRect.height - gap >= margin;
 
-			Object.assign(this.translatePopup.style, {
-				left: `${finalX}px`,
-				top: `${finalY}px`,
-				visibility: 'visible'
-			});
+		if (!fitsBelow && fitsAbove) {
+			finalY = y - popupRect.height - gap;
+		} else if (!fitsBelow) {
+			finalY = viewportHeight - popupRect.height - margin;
+		}
+
+		finalY = Math.min(Math.max(finalY, margin), viewportHeight - popupRect.height - margin);
+
+		Object.assign(this.translatePopup.style, {
+			left: `${finalX}px`,
+			top: `${finalY}px`
+		});
+	}
+
+	repositionPopup() {
+		if (!this.lastPopupAnchor) return;
+		requestAnimationFrame(() => {
+			this.positionPopup(this.lastPopupAnchor.x, this.lastPopupAnchor.y);
 		});
 	}
 }

@@ -1,3 +1,11 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&display=swap");
+
+#translate-icon,
+.translate-popup,
+.translate-popup * {
+	box-sizing: border-box;
+}
+
 #translate-icon {
 	position: fixed;
 	display: none;
@@ -7,75 +15,86 @@
 	z-index: 999999;
 	justify-content: center;
 	align-items: center;
-	background: #1E1E1E;
-	color: #E0E0E0;
+	background: #f8f6f1;
+	color: #2f3d36;
 	border-radius: 6px;
+	border: 1px solid rgba(0, 0, 0, 0.08);
 	cursor: pointer;
-	box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
 	pointer-events: auto;
 	transform: translateY(-10px);
-	transition: all 0.2s ease;
+	transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+
+#translate-icon:hover {
+	box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
 }
 
 .translate-popup {
 	position: fixed;
 	display: none;
-	width: 320px;
-	max-height: 400px;
+	width: min(320px, calc(100vw - 32px));
+	max-height: min(380px, calc(100vh - 32px));
 	z-index: 999999;
-	padding: 16px;
-	background: #121212;
-	border-radius: 12px;
-	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
-	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	padding: 14px 16px;
+	background: #f8f6f1;
+	border-radius: 10px;
+	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+	font-family: "Manrope", "Avenir Next", "Helvetica Neue", "Noto Sans", sans-serif;
 	font-size: 14px;
 	line-height: 1.6;
-	border: 1px solid #2A2A2A;
-	color: #E0E0E0;
-	backdrop-filter: blur(8px);
+	letter-spacing: 0.01em;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	color: #1f2a24;
+	text-rendering: optimizeLegibility;
+	-webkit-font-smoothing: antialiased;
 	overflow-y: auto;
 }
 
 .translate-popup::-webkit-scrollbar {
 	width: 6px;
 }
+
 .translate-popup::-webkit-scrollbar-track {
 	background: transparent;
 }
+
 .translate-popup::-webkit-scrollbar-thumb {
-	background-color: rgba(255, 255, 255, 0.1);
+	background-color: rgba(0, 0, 0, 0.12);
 	border-radius: 3px;
 }
 
 .translation-header {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 10px;
 }
 
 .with-parts {
 	padding-bottom: 12px;
 	margin-bottom: 12px;
-	border-bottom: 1px solid #2A2A2A;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .original-text-container {
 	position: relative;
 	width: 100%;
-	padding-left: 4px;
+	padding-left: 2px;
+	padding-right: 32px;
 }
 
 .original-text {
-	color: #00C27A;
-	font-size: 15px;
+	color: #34574d;
+	font-size: 13.5px;
+	font-weight: 500;
 	line-height: 1.6;
 	white-space: pre-wrap;
 	word-break: break-word;
 }
 
 .translated-text {
-	padding: 0 4px;
-	color: #E0E0E0;
+	padding: 0 2px;
+	color: #1f2a24;
 	font-weight: 500;
 }
 
@@ -83,20 +102,22 @@
 	position: absolute;
 	display: flex;
 	right: 0;
-	top: 2px;
+	top: 0;
 	align-items: center;
 	justify-content: center;
-	padding: 6px;
-	border: none;
-	border-radius: 6px;
-	background-color: #1A1A1A;
-	color: #00C27A;
+	width: 26px;
+	height: 26px;
+	border: 1px solid rgba(0, 0, 0, 0.12);
+	border-radius: 999px;
+	background: transparent;
+	color: #34574d;
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 #speak-button:hover {
-	background-color: #2A2A2A;
+	background: rgba(52, 87, 77, 0.08);
+	border-color: rgba(52, 87, 77, 0.2);
 }
 
 .pos-section {
@@ -104,26 +125,29 @@
 }
 
 .pos-label {
-	color: #AAAAAA;
-	font-size: 13px;
-	font-weight: 500;
+	color: #6e7571;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
 	margin-bottom: 6px;
 }
 
 .meanings-container {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 8px;
+	gap: 6px;
 }
 
 .meaning-item {
 	padding: 4px 8px;
-	border-radius: 6px;
-	font-size: 13px;
-	background: #2A2A2A;
-	color: #E0E0E0;
+	border-radius: 999px;
+	font-size: 12.5px;
+	background: #f1efe9;
+	border: 1px solid rgba(0, 0, 0, 0.08);
+	color: #2e3a34;
 }
 
 .translation-error {
-	color: #EF5350;
+	color: #c94b3d;
 }
