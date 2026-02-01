@@ -30,6 +30,11 @@
 	box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
 }
 
+#translate-icon svg {
+	width: 22px;
+	height: 22px;
+}
+
 .translate-popup {
 	position: fixed;
 	display: none;
@@ -108,7 +113,7 @@
 	width: 26px;
 	height: 26px;
 	border: 1px solid rgba(0, 0, 0, 0.12);
-	border-radius: 999px;
+	border-radius: 6px;
 	background: transparent;
 	color: #34574d;
 	cursor: pointer;
