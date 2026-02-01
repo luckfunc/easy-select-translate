@@ -11,7 +11,18 @@
     },
     "action": {
       "default_popup": "src/popup/popup.html",
-      "default_icon": "assets/icons/icon.png"
+      "default_icon": {
+        "16": "assets/icons/icon.png",
+        "32": "assets/icons/icon.png",
+        "48": "assets/icons/icon.png",
+        "128": "assets/icons/icon.png"
+      }
+    },
+    "icons": {
+      "16": "assets/icons/icon.png",
+      "32": "assets/icons/icon.png",
+      "48": "assets/icons/icon.png",
+      "128": "assets/icons/icon.png"
     },
     "content_scripts": [
       {
