@@ -1,55 +1,78 @@
-const translateButton = document.querySelector<HTMLButtonElement>('#translate');
-const inputElement = document.querySelector<HTMLTextAreaElement>('#input');
-const resultElement = document.querySelector<HTMLParagraphElement>('#result');
+import {
+  clearDeepSeekApiKey,
+  deepseekModels,
+  getDeepSeekSettings,
+  saveDeepSeekSettings,
+  type DeepSeekModel,
+} from '../shared/deepseek-settings';
 
-if (!translateButton || !inputElement || !resultElement) {
-  throw new Error('Popup UI failed to initialize.');
+const settingsForm = queryRequired<HTMLFormElement>('#settings-form');
+const apiKeyInput = queryRequired<HTMLInputElement>('#api-key');
+const modelSelect = queryRequired<HTMLSelectElement>('#model');
+const clearKeyButton = queryRequired<HTMLButtonElement>('#clear-key');
+const keyState = queryRequired<HTMLSpanElement>('#key-state');
+const statusMessage = queryRequired<HTMLParagraphElement>('#status-message');
+
+settingsForm.addEventListener('submit', (event) => {
+  event.preventDefault();
+  void saveSettings();
+});
+
+clearKeyButton.addEventListener('click', () => {
+  void clearSavedApiKey();
+});
+
+void loadSettings();
+
+async function loadSettings(): Promise<void> {
+  const { apiKey, model } = await getDeepSeekSettings();
+
+  apiKeyInput.value = apiKey;
+  modelSelect.value = model;
+  setSavedState(Boolean(apiKey));
 }
 
-translateButton.addEventListener('click', async () => {
-  const text = inputElement.value.trim();
+async function saveSettings(): Promise<void> {
+  const apiKey = apiKeyInput.value.trim();
 
-  resultElement.style.display = 'none';
-
-  if (!text) {
+  if (!apiKey) {
+    await clearSavedApiKey();
     return;
   }
 
-  try {
-    const translated = await fetchTranslation(text);
-
-    if (translated) {
-      resultElement.textContent = translated;
-      resultElement.style.display = 'block';
-    }
-  } catch (error) {
-    console.error('Translation failed:', error);
-  }
-});
-
-async function fetchTranslation(text: string): Promise<string> {
-  const response = await fetch(
-    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
-  );
-  const result: unknown = await response.json();
-
-  return parseTranslationText(result);
+  await saveDeepSeekSettings({
+    apiKey,
+    model: getSelectedDeepSeekModel(),
+  });
+  setSavedState(true, '已保存');
 }
 
-function parseTranslationText(apiResponse: unknown): string {
-  if (!Array.isArray(apiResponse)) {
-    return '';
+async function clearSavedApiKey(): Promise<void> {
+  await clearDeepSeekApiKey();
+  apiKeyInput.value = '';
+  setSavedState(false, '已清除');
+}
+
+function getSelectedDeepSeekModel(): DeepSeekModel {
+  const value = modelSelect.value;
+
+  return deepseekModels.includes(value as DeepSeekModel)
+    ? (value as DeepSeekModel)
+    : 'deepseek-v4-flash';
+}
+
+function setSavedState(saved: boolean, message = ''): void {
+  keyState.textContent = saved ? 'SAVED' : 'EMPTY';
+  keyState.classList.toggle('saved', saved);
+  statusMessage.textContent = message;
+}
+
+function queryRequired<TElement extends Element>(selector: string): TElement {
+  const element = document.querySelector<TElement>(selector);
+
+  if (!element) {
+    throw new Error(`Missing popup element: ${selector}`);
   }
 
-  const translations = apiResponse[0];
-  if (!Array.isArray(translations)) {
-    return '';
-  }
-
-  const firstTranslation = translations[0];
-  if (!Array.isArray(firstTranslation)) {
-    return '';
-  }
-
-  return typeof firstTranslation[0] === 'string' ? firstTranslation[0] : '';
+  return element;
 }

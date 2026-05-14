@@ -1,17 +1,21 @@
-/**
- * 网页划词翻译扩展
- * 功能：在鼠标选择文本后显示翻译图标，点击后显示翻译弹窗，支持词性解析和语音朗读
- */
+import { translateWithDeepSeek } from '../shared/deepseek-translate';
+import { getDeepSeekSettings } from '../shared/deepseek-settings';
+import { translateWithGoogle, type TranslationResult } from '../shared/google-translate';
+import contentStyles from './content.css?raw';
+
 type PopupAnchor = {
   x: number;
   y: number;
 };
 
-type TranslationResult = {
-  text: string;
-  partsOfSpeech: Record<string, string[]>;
-  hasPartsOfSpeech: boolean;
-};
+const collapsedOriginalTextLength = 120;
+const collapsedOriginalTextLines = 2;
+const translationIconSize = 24;
+const translationIconMargin = 8;
+const translationIconXOffset = 14;
+const translationIconYOffset = 10;
+const popupViewportMargin = 16;
+const popupAnchorGap = 12;
 
 class TextTranslator {
   private static readonly POS_LABELS: Record<string, string> = {
@@ -25,13 +29,31 @@ class TextTranslator {
     interjection: '感叹词',
   };
 
+  private readonly host: HTMLElement;
+  private readonly shadowRoot: ShadowRoot;
   private translatePopup: HTMLDivElement | null = null;
   private translateIcon: HTMLDivElement | null = null;
   private lastSelectedText = '';
   private lastPopupAnchor: PopupAnchor | null = null;
 
   constructor() {
+    const { host, shadowRoot } = this.createShadowRoot();
+
+    this.host = host;
+    this.shadowRoot = shadowRoot;
     this.initEventListeners();
+  }
+
+  private createShadowRoot(): { host: HTMLElement; shadowRoot: ShadowRoot } {
+    const host = document.createElement('easy-select-translate');
+    const shadowRoot = host.attachShadow({ mode: 'open' });
+    const style = document.createElement('style');
+
+    style.textContent = contentStyles;
+    shadowRoot.append(style);
+    document.documentElement.append(host);
+
+    return { host, shadowRoot };
   }
 
   private initEventListeners(): void {
@@ -40,7 +62,7 @@ class TextTranslator {
   }
 
   private readonly handleDocumentMouseDown = (event: MouseEvent): void => {
-    if (event.target instanceof Node && this.isUIElementClicked(event.target)) {
+    if (this.isUIEvent(event)) {
       return;
     }
 
@@ -48,6 +70,10 @@ class TextTranslator {
   };
 
   private readonly handleDocumentMouseUp = (event: MouseEvent): void => {
+    if (this.isUIEvent(event)) {
+      return;
+    }
+
     const selection = window.getSelection()?.toString().trim() ?? '';
 
     if (selection) {
@@ -66,10 +92,11 @@ class TextTranslator {
 
   private createTranslationIcon(): HTMLDivElement {
     const icon = document.createElement('div');
-    icon.id = 'translate-icon';
+
+    icon.className = 'est-translate-icon';
     icon.innerHTML = this.getIconSVG();
     icon.addEventListener('click', this.handleIconClick);
-    document.body.appendChild(icon);
+    this.shadowRoot.append(icon);
 
     return icon;
   }
@@ -79,14 +106,15 @@ class TextTranslator {
       return;
     }
 
-    this.translatePopup.innerHTML = `<div class='translation-error'>翻译失败</div>`;
+    this.translatePopup.innerHTML = `<div class='est-translation-error'>翻译失败</div>`;
     this.repositionPopup();
   }
 
   private createTranslationPopup(): HTMLDivElement {
     const popup = document.createElement('div');
-    popup.className = 'translate-popup';
-    document.body.appendChild(popup);
+
+    popup.className = 'est-translate-popup';
+    this.shadowRoot.append(popup);
 
     return popup;
   }
@@ -98,10 +126,14 @@ class TextTranslator {
 
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const iconSize = 24;
-    const margin = 8;
-    const finalX = Math.min(Math.max(x - 14, margin), viewportWidth - iconSize - margin);
-    const finalY = Math.min(Math.max(y + 10, margin), viewportHeight - iconSize - margin);
+    const finalX = Math.min(
+      Math.max(x - translationIconXOffset, translationIconMargin),
+      viewportWidth - translationIconSize - translationIconMargin,
+    );
+    const finalY = Math.min(
+      Math.max(y + translationIconYOffset, translationIconMargin),
+      viewportHeight - translationIconSize - translationIconMargin,
+    );
 
     Object.assign(this.translateIcon.style, {
       left: `${finalX}px`,
@@ -117,14 +149,12 @@ class TextTranslator {
       return;
     }
 
-    this.translatePopup.innerHTML = `
-      <div class='translation-header ${translationResult.hasPartsOfSpeech ? 'with-parts' : ''}'>
-        ${this.createHeaderContent(originalText, translationResult.text)}
-      </div>
-      ${translationResult.hasPartsOfSpeech ? this.createPartsOfSpeechHTML(translationResult.partsOfSpeech) : ''}
-    `;
+    this.translatePopup.innerHTML = this.createTranslationContentHTML(
+      translationResult,
+      originalText,
+    );
 
-    this.addSpeechHandler(originalText);
+    this.addPopupHandlers(originalText, translationResult.text);
     this.repositionPopup();
   }
 
@@ -153,7 +183,8 @@ class TextTranslator {
     this.initializePopupPosition(x, y);
 
     try {
-      const translationResult = await this.fetchTranslation(text);
+      const translationResult = await this.translateSelectedText(text);
+
       this.updatePopupContent(translationResult, text);
     } catch (error) {
       console.error('翻译失败:', error);
@@ -161,54 +192,28 @@ class TextTranslator {
     }
   }
 
-  private async fetchTranslation(text: string): Promise<TranslationResult> {
-    const response = await fetch(this.buildAPIUrl(text));
+  private async translateSelectedText(text: string): Promise<TranslationResult> {
+    const { apiKey, model } = await getDeepSeekSettings();
 
-    if (!response.ok) {
-      throw new Error(`HTTP错误 ${response.status}`);
+    if (apiKey) {
+      const translatedText = await translateWithDeepSeek({
+        apiKey,
+        model,
+        text,
+        targetLanguage: 'Simplified Chinese',
+      });
+
+      return {
+        text: translatedText,
+        partsOfSpeech: {},
+        hasPartsOfSpeech: false,
+      };
     }
 
-    const apiResponse: unknown = await response.json();
-    return this.parseTranslationData(apiResponse);
-  }
-
-  private buildAPIUrl(text: string): string {
-    return `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=zh-CN&dt=t&dt=rm&dt=bd&q=${encodeURIComponent(text)}`;
-  }
-
-  private parseTranslationData(apiResponse: unknown): TranslationResult {
-    const response = Array.isArray(apiResponse) ? apiResponse : [];
-    const translations = Array.isArray(response[0]) ? response[0] : [];
-    const firstTranslation = Array.isArray(translations[0]) ? translations[0] : [];
-    const text = typeof firstTranslation[0] === 'string' ? firstTranslation[0] : '';
-    const partsOfSpeech: Record<string, string[]> = {};
-    const dictionary = Array.isArray(response[1]) ? response[1] : [];
-
-    dictionary.forEach((entry) => {
-      if (!Array.isArray(entry)) {
-        return;
-      }
-
-      const [partOfSpeech, meanings] = entry;
-
-      if (typeof partOfSpeech !== 'string' || !Array.isArray(meanings)) {
-        return;
-      }
-
-      const filteredMeanings = meanings.filter(
-        (meaning): meaning is string => typeof meaning === 'string',
-      );
-
-      if (filteredMeanings.length > 0) {
-        partsOfSpeech[partOfSpeech] = filteredMeanings;
-      }
+    return translateWithGoogle(text, {
+      targetLanguage: 'zh-CN',
+      includeDictionary: true,
     });
-
-    return {
-      text,
-      partsOfSpeech,
-      hasPartsOfSpeech: Object.keys(partsOfSpeech).length > 0,
-    };
   }
 
   private getLocalizedPartOfSpeech(pos: string): string {
@@ -219,10 +224,10 @@ class TextTranslator {
     return Object.entries(parts)
       .map(
         ([pos, meanings]) => `
-      <div class='pos-section'>
-        <div class='pos-label'>${this.escapeHTML(this.getLocalizedPartOfSpeech(pos))}</div>
-        <div class='meanings-container'>
-          ${meanings.map((meaning) => `<span class='meaning-item'>${this.escapeHTML(meaning)}</span>`).join('')}
+      <div class='est-pos-section'>
+        <div class='est-pos-label'>${this.escapeHTML(this.getLocalizedPartOfSpeech(pos))}</div>
+        <div class='est-meanings-container'>
+          ${meanings.map((meaning) => `<span class='est-meaning-item'>${this.escapeHTML(meaning)}</span>`).join('')}
         </div>
       </div>
     `,
@@ -230,11 +235,79 @@ class TextTranslator {
       .join('');
   }
 
-  private isUIElementClicked(targetElement: Node): boolean {
-    return Boolean(
-      (this.translateIcon && this.translateIcon.contains(targetElement)) ||
-        (this.translatePopup && this.translatePopup.contains(targetElement)),
+  private createTranslationContentHTML(
+    translationResult: TranslationResult,
+    originalText: string,
+  ): string {
+    return [
+      this.createToolbarHTML(),
+      this.createOriginalTextHTML(originalText),
+      this.createTranslatedTextHTML(translationResult.text),
+      this.createPartsOfSpeechSectionHTML(translationResult),
+    ].join('');
+  }
+
+  private createToolbarHTML(): string {
+    return `
+      <div class='est-popup-toolbar'>
+        <span class='est-popup-label'>TRANSLATION</span>
+        <div class='est-popup-actions'>
+          <button class='est-tool-button est-copy-button' type='button' title='复制译文' aria-label='复制译文'>
+            ${this.getCopySVG()}
+          </button>
+          <button class='est-tool-button est-speak-button' type='button' title='朗读原文' aria-label='朗读原文'>
+            ${this.getSpeakSVG()}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  private createOriginalTextHTML(originalText: string): string {
+    const shouldCollapseOriginal = this.shouldCollapseOriginalText(originalText);
+    const collapsedClassName = shouldCollapseOriginal ? 'est-collapsed' : '';
+    const expandButton = shouldCollapseOriginal
+      ? "<button class='est-expand-button' type='button'>展开原文</button>"
+      : '';
+
+    return `
+      <div class='est-original-section'>
+        <div class='est-section-label'>SOURCE</div>
+        <div class='est-original-text ${collapsedClassName}'>
+          ${this.escapeHTML(originalText)}
+        </div>
+        ${expandButton}
+      </div>
+    `;
+  }
+
+  private createTranslatedTextHTML(translatedText: string): string {
+    return `<div class='est-translated-text'>${this.escapeHTML(translatedText)}</div>`;
+  }
+
+  private createPartsOfSpeechSectionHTML(translationResult: TranslationResult): string {
+    if (!translationResult.hasPartsOfSpeech) {
+      return '';
+    }
+
+    return `
+      <div class='est-pos-list'>
+        ${this.createPartsOfSpeechHTML(translationResult.partsOfSpeech)}
+      </div>
+    `;
+  }
+
+  private shouldCollapseOriginalText(text: string): boolean {
+    return (
+      text.length > collapsedOriginalTextLength ||
+      text.split(/\r?\n/).length > collapsedOriginalTextLines
     );
+  }
+
+  private isUIEvent(event: MouseEvent): boolean {
+    return event.composedPath().some((node) => {
+      return node === this.host || node === this.translateIcon || node === this.translatePopup;
+    });
   }
 
   private hideUIElements(): void {
@@ -247,13 +320,30 @@ class TextTranslator {
     }
   }
 
-  private addSpeechHandler(text: string): void {
-    const speakButton = this.translatePopup?.querySelector<HTMLButtonElement>('#speak-button');
+  private addPopupHandlers(originalText: string, translatedText: string): void {
+    const speakButton = this.translatePopup?.querySelector<HTMLButtonElement>('.est-speak-button');
+    const copyButton = this.translatePopup?.querySelector<HTMLButtonElement>('.est-copy-button');
+    const expandButton =
+      this.translatePopup?.querySelector<HTMLButtonElement>('.est-expand-button');
 
     if (speakButton) {
       speakButton.addEventListener('click', (event) => {
         event.stopPropagation();
-        this.speakText(text);
+        this.speakText(originalText);
+      });
+    }
+
+    if (copyButton) {
+      copyButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        void this.copyText(translatedText, copyButton);
+      });
+    }
+
+    if (expandButton) {
+      expandButton.addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.toggleOriginalText(expandButton);
       });
     }
   }
@@ -268,17 +358,42 @@ class TextTranslator {
     window.speechSynthesis.speak(utterance);
   }
 
-  private createHeaderContent(originalText: string, translatedText: string): string {
+  private async copyText(text: string, button: HTMLButtonElement): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      button.classList.add('est-done');
+      window.setTimeout(() => button.classList.remove('est-done'), 900);
+    } catch (error) {
+      console.error('复制失败:', error);
+    }
+  }
+
+  private toggleOriginalText(button: HTMLButtonElement): void {
+    const originalText = this.translatePopup?.querySelector<HTMLDivElement>('.est-original-text');
+
+    if (!originalText) {
+      return;
+    }
+
+    const isCollapsed = originalText.classList.toggle('est-collapsed');
+    button.textContent = isCollapsed ? '展开原文' : '收起原文';
+    this.repositionPopup();
+  }
+
+  private getCopySVG(): string {
     return `
-      <div class='original-text-container'>
-        <div class='original-text'>${this.escapeHTML(originalText)}</div>
-        <button id='speak-button' type='button'>
-          <svg width='16' height='16' viewBox='0 0 24 24' fill='currentColor'>
-            <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
-          </svg>
-        </button>
-      </div>
-      <div class='translated-text'>${this.escapeHTML(translatedText)}</div>
+      <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
+        <rect x='9' y='9' width='13' height='13' rx='1'/>
+        <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/>
+      </svg>
+    `;
+  }
+
+  private getSpeakSVG(): string {
+    return `
+      <svg width='15' height='15' viewBox='0 0 24 24' fill='currentColor'>
+        <path d='M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-.77-3.37-2-4.47v8.94c1.23-1.1 2-2.7 2-4.47z'/>
+      </svg>
     `;
   }
 
@@ -289,7 +404,12 @@ class TextTranslator {
 
     this.translatePopup.style.display = 'block';
     this.translatePopup.style.visibility = 'hidden';
-    this.translatePopup.innerHTML = '<div>翻译中...</div>';
+    this.translatePopup.innerHTML = `
+      <div class='est-popup-toolbar'>
+        <span class='est-popup-label'>TRANSLATING</span>
+      </div>
+      <div class='est-loading-body'>正在翻译...</div>
+    `;
 
     requestAnimationFrame(() => {
       this.positionPopup(x, y);
@@ -308,22 +428,26 @@ class TextTranslator {
     const popupRect = this.translatePopup.getBoundingClientRect();
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
-    const margin = 16;
-    const gap = 12;
 
-    const finalX = Math.min(Math.max(x, margin), viewportWidth - popupRect.width - margin);
+    const finalX = Math.min(
+      Math.max(x, popupViewportMargin),
+      viewportWidth - popupRect.width - popupViewportMargin,
+    );
     let finalY = y;
 
-    const fitsBelow = y + popupRect.height <= viewportHeight - margin;
-    const fitsAbove = y - popupRect.height - gap >= margin;
+    const fitsBelow = y + popupRect.height <= viewportHeight - popupViewportMargin;
+    const fitsAbove = y - popupRect.height - popupAnchorGap >= popupViewportMargin;
 
     if (!fitsBelow && fitsAbove) {
-      finalY = y - popupRect.height - gap;
+      finalY = y - popupRect.height - popupAnchorGap;
     } else if (!fitsBelow) {
-      finalY = viewportHeight - popupRect.height - margin;
+      finalY = viewportHeight - popupRect.height - popupViewportMargin;
     }
 
-    finalY = Math.min(Math.max(finalY, margin), viewportHeight - popupRect.height - margin);
+    finalY = Math.min(
+      Math.max(finalY, popupViewportMargin),
+      viewportHeight - popupRect.height - popupViewportMargin,
+    );
 
     Object.assign(this.translatePopup.style, {
       left: `${finalX}px`,

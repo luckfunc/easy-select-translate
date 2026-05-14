@@ -5,8 +5,10 @@ A Chrome extension that allows users to quickly translate selected text on any w
 ## Features
 
 - Quick translation by text selection
+- DeepSeek API key support
+- Google Translate fallback when no DeepSeek API key is configured
 - Text-to-speech functionality
-- Part of speech analysis
+- Part of speech analysis for Google fallback results
 - Clean and intuitive UI
 ## Preview
 ![Preview](assets/preview-readme.png)
@@ -35,10 +37,13 @@ The watch build writes extension files to `dist`. Reload the unpacked extension 
 
 ## Usage
 
-1. Select any text on a webpage
-2. Click the translation icon that appears
-3. View the translation in a popup window
-4. Click the speaker icon to hear the pronunciation
+1. Click the extension icon and save a DeepSeek API key if you want DeepSeek translations
+2. Select any text on a webpage
+3. Click the translation icon that appears
+4. View the translation in the inline popup
+5. Click the speaker icon to hear the pronunciation
+
+If no DeepSeek API key is saved, the extension falls back to Google Translate.
 
 ## Author
 
