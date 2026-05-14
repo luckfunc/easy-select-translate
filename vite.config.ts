@@ -12,12 +12,15 @@ function copyExtensionStaticFiles(): PluginOption {
     closeBundle() {
       mkdirSync(resolve(distDir, 'src/content'), { recursive: true });
       copyFileSync(resolve(rootDir, 'manifest.json'), resolve(distDir, 'manifest.json'));
-      copyFileSync(resolve(rootDir, 'src/content/content.css'), resolve(distDir, 'src/content/content.css'));
+      copyFileSync(
+        resolve(rootDir, 'src/content/content.css'),
+        resolve(distDir, 'src/content/content.css'),
+      );
       cpSync(resolve(rootDir, 'assets'), resolve(distDir, 'assets'), {
         recursive: true,
-        filter: (source) => !source.endsWith('.DS_Store')
+        filter: (source) => !source.endsWith('.DS_Store'),
       });
-    }
+    },
   };
 }
 
@@ -30,18 +33,24 @@ export default defineConfig({
       input: {
         background: resolve(rootDir, 'src/background/background.ts'),
         content: resolve(rootDir, 'src/content/content.ts'),
-        popup: resolve(rootDir, 'src/popup/popup.html')
+        popup: resolve(rootDir, 'src/popup/popup.html'),
       },
       output: {
         entryFileNames(chunkInfo) {
-          if (chunkInfo.name === 'background') return 'src/background/background.js';
-          if (chunkInfo.name === 'content') return 'src/content/content.js';
+          if (chunkInfo.name === 'background') {
+            return 'src/background/background.js';
+          }
+
+          if (chunkInfo.name === 'content') {
+            return 'src/content/content.js';
+          }
+
           return 'assets/[name]-[hash].js';
         },
         chunkFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: 'assets/[name]-[hash][extname]'
-      }
-    }
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      },
+    },
   },
-  plugins: [copyExtensionStaticFiles()]
+  plugins: [copyExtensionStaticFiles()],
 });

@@ -29,7 +29,7 @@ translateButton.addEventListener('click', async () => {
 
 async function fetchTranslation(text: string): Promise<string> {
   const response = await fetch(
-    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`
+    `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=${encodeURIComponent(text)}`,
   );
   const result: unknown = await response.json();
 

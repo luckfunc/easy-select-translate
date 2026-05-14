@@ -17,6 +17,6 @@ chrome.runtime.onMessage.addListener((request: SpeakMessage) => {
       if (event.type === 'error') {
         console.error('TTS Error:', event);
       }
-    }
+    },
   });
 });

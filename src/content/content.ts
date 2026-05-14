@@ -22,7 +22,7 @@ class TextTranslator {
     preposition: '介词',
     conjunction: '连词',
     pronoun: '代词',
-    interjection: '感叹词'
+    interjection: '感叹词',
   };
 
   private translatePopup: HTMLDivElement | null = null;
@@ -108,7 +108,7 @@ class TextTranslator {
       top: `${finalY}px`,
       display: 'flex',
       opacity: '1',
-      transform: 'translateY(0)'
+      transform: 'translateY(0)',
     });
   }
 
@@ -195,7 +195,9 @@ class TextTranslator {
         return;
       }
 
-      const filteredMeanings = meanings.filter((meaning): meaning is string => typeof meaning === 'string');
+      const filteredMeanings = meanings.filter(
+        (meaning): meaning is string => typeof meaning === 'string',
+      );
 
       if (filteredMeanings.length > 0) {
         partsOfSpeech[partOfSpeech] = filteredMeanings;
@@ -205,7 +207,7 @@ class TextTranslator {
     return {
       text,
       partsOfSpeech,
-      hasPartsOfSpeech: Object.keys(partsOfSpeech).length > 0
+      hasPartsOfSpeech: Object.keys(partsOfSpeech).length > 0,
     };
   }
 
@@ -214,20 +216,24 @@ class TextTranslator {
   }
 
   private createPartsOfSpeechHTML(parts: Record<string, string[]>): string {
-    return Object.entries(parts).map(([pos, meanings]) => `
+    return Object.entries(parts)
+      .map(
+        ([pos, meanings]) => `
       <div class='pos-section'>
         <div class='pos-label'>${this.escapeHTML(this.getLocalizedPartOfSpeech(pos))}</div>
         <div class='meanings-container'>
           ${meanings.map((meaning) => `<span class='meaning-item'>${this.escapeHTML(meaning)}</span>`).join('')}
         </div>
       </div>
-    `).join('');
+    `,
+      )
+      .join('');
   }
 
   private isUIElementClicked(targetElement: Node): boolean {
     return Boolean(
       (this.translateIcon && this.translateIcon.contains(targetElement)) ||
-      (this.translatePopup && this.translatePopup.contains(targetElement))
+        (this.translatePopup && this.translatePopup.contains(targetElement)),
     );
   }
 
@@ -321,7 +327,7 @@ class TextTranslator {
 
     Object.assign(this.translatePopup.style, {
       left: `${finalX}px`,
-      top: `${finalY}px`
+      top: `${finalY}px`,
     });
   }
 
@@ -345,7 +351,7 @@ class TextTranslator {
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
-      "'": '&#039;'
+      "'": '&#039;',
     };
 
     return value.replace(/[&<>"']/g, (character) => escapeMap[character]);
