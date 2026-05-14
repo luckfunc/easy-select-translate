@@ -1,15 +1,39 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang='zh-CN'>
 <head>
-  <title>Simple Translate</title>
+  <title>Easy Select Translate</title>
   <link rel='stylesheet' href='popup.css'>
   <meta charset='UTF-8'>
 </head>
 <body>
-  <h1>快速翻译</h1>
-  <textarea id='input' placeholder='输入要翻译的文本...'></textarea>
-  <button id='translate'>翻译</button>
-  <p id='result'></p>
-  <script src='popup.js'></script>
+  <main class='panel'>
+    <header class='panel-header'>
+      <div>
+        <h1>Easy Select Translate</h1>
+        <p>DEEPSEEK SETTINGS</p>
+      </div>
+      <span class='status-pill' id='key-state'>EMPTY</span>
+    </header>
+
+    <form id='settings-form' class='settings-form'>
+      <label for='api-key'>DeepSeek API Key</label>
+      <input id='api-key' type='password' autocomplete='off' spellcheck='false' placeholder='sk-...' />
+
+      <label for='model'>Model</label>
+      <select id='model'>
+        <option value='deepseek-v4-flash'>deepseek-v4-flash</option>
+        <option value='deepseek-v4-pro'>deepseek-v4-pro</option>
+      </select>
+
+      <div class='actions'>
+        <button type='submit'>保存</button>
+        <button id='clear-key' type='button' class='secondary'>清除</button>
+      </div>
+    </form>
+
+    <p id='status-message' class='status-message' aria-live='polite'></p>
+  </main>
+
+  <script type='module' src='./popup.ts'></script>
 </body>
 </html>
