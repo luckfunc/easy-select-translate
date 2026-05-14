@@ -16,9 +16,22 @@ A Chrome extension that allows users to quickly translate selected text on any w
 ```bash
 git clone https://github.com/luckfunc/easy-select-translate.git
 ```
-2. Open Chrome and navigate to `chrome://extensions/`
-3. Enable "Developer mode"
-4. Click "Load unpacked" and select the extension directory
+2. Install dependencies and build the extension
+```bash
+npm install
+npm run build
+```
+3. Open Chrome and navigate to `chrome://extensions/`
+4. Enable "Developer mode"
+5. Click "Load unpacked" and select the `dist` directory
+
+## Development
+
+```bash
+npm run dev
+```
+
+The watch build writes extension files to `dist`. Reload the unpacked extension in Chrome after changes.
 
 ## Usage
 
