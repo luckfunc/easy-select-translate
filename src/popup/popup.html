@@ -10,14 +10,15 @@
     <header class='panel-header'>
       <div>
         <h1>Easy Select Translate</h1>
-        <p>DEEPSEEK SETTINGS</p>
+        <p>TRANSLATION PROVIDER</p>
       </div>
-      <span class='status-pill' id='key-state'>EMPTY</span>
+      <span class='status-pill' id='key-state'>GOOGLE</span>
     </header>
 
     <form id='settings-form' class='settings-form'>
-      <label for='api-key'>DeepSeek API Key</label>
+      <label for='api-key'>DeepSeek API Key（可选）</label>
       <input id='api-key' type='password' autocomplete='off' spellcheck='false' placeholder='sk-...' />
+      <p id='provider-note' class='provider-note'>未配置 DeepSeek Key，将自动使用 Google 翻译。</p>
 
       <label for='model'>Model</label>
       <select id='model'>

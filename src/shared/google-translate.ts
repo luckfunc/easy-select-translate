@@ -62,9 +62,13 @@ function parseGoogleTranslateResponse(apiResponse: unknown): TranslationResult {
   const response = Array.isArray(apiResponse) ? apiResponse : [];
   const translations = Array.isArray(response[0]) ? response[0] : [];
   const firstTranslation = Array.isArray(translations[0]) ? translations[0] : [];
-  const text = typeof firstTranslation[0] === 'string' ? firstTranslation[0] : '';
+  const text = typeof firstTranslation[0] === 'string' ? firstTranslation[0].trim() : '';
   const partsOfSpeech: Record<string, string[]> = {};
   const dictionary = Array.isArray(response[1]) ? response[1] : [];
+
+  if (!text) {
+    throw new Error('Google Translate returned an empty translation');
+  }
 
   dictionary.forEach((entry) => {
     if (!Array.isArray(entry)) {

@@ -3,17 +3,27 @@ import { getDeepSeekSettings } from '../shared/deepseek-settings';
 import { translateWithGoogle, type TranslationResult } from '../shared/google-translate';
 import contentStyles from './content.css?raw';
 
-type PopupAnchor = {
+type ViewportPoint = {
   x: number;
   y: number;
 };
 
+type SourceDisplay = {
+  previewText: string;
+  showFullText: boolean;
+};
+
+type SelectedText = {
+  text: string;
+  iconAnchor: ViewportPoint;
+};
+
 const collapsedOriginalTextLength = 120;
 const collapsedOriginalTextLines = 2;
+const fullSourceSectionMinLength = 48;
 const translationIconSize = 24;
 const translationIconMargin = 8;
-const translationIconXOffset = 14;
-const translationIconYOffset = 10;
+const translationIconGap = 6;
 const popupViewportMargin = 16;
 const popupAnchorGap = 12;
 
@@ -34,7 +44,8 @@ class TextTranslator {
   private translatePopup: HTMLDivElement | null = null;
   private translateIcon: HTMLDivElement | null = null;
   private lastSelectedText = '';
-  private lastPopupAnchor: PopupAnchor | null = null;
+  private popupAnchor: ViewportPoint | null = null;
+  private selectionIconAnchor: ViewportPoint | null = null;
 
   constructor() {
     const { host, shadowRoot } = this.createShadowRoot();
@@ -74,13 +85,71 @@ class TextTranslator {
       return;
     }
 
-    const selection = window.getSelection()?.toString().trim() ?? '';
+    const selectedText = this.getSelectedText();
 
-    if (selection) {
-      this.lastSelectedText = selection;
-      this.showTranslationIcon(event.clientX, event.clientY);
+    if (selectedText) {
+      this.lastSelectedText = selectedText.text;
+      this.showTranslationIcon(selectedText.iconAnchor);
     }
   };
+
+  private getSelectedText(): SelectedText | null {
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+      return null;
+    }
+
+    const text = selection.toString().trim();
+    if (!text) {
+      return null;
+    }
+
+    const selectedRect = this.getSelectionEndRect(selection.getRangeAt(0));
+    if (!selectedRect) {
+      return null;
+    }
+
+    return {
+      text,
+      iconAnchor: this.getIconAnchorFromSelectionRect(selectedRect),
+    };
+  }
+
+  private getSelectionEndRect(range: Range): DOMRectReadOnly | null {
+    const textRects = Array.from(range.getClientRects()).filter((rect) => {
+      return rect.width > 0 && rect.height > 0;
+    });
+
+    if (textRects.length > 0) {
+      return textRects[textRects.length - 1];
+    }
+
+    const boundingRect = range.getBoundingClientRect();
+    if (boundingRect.width > 0 && boundingRect.height > 0) {
+      return boundingRect;
+    }
+
+    return null;
+  }
+
+  private getIconAnchorFromSelectionRect(selectionRect: DOMRectReadOnly): ViewportPoint {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    const rightX = selectionRect.right + translationIconGap;
+    const leftX = selectionRect.left - translationIconSize - translationIconGap;
+    const belowY = selectionRect.bottom + translationIconGap;
+    const aboveY = selectionRect.top - translationIconSize - translationIconGap;
+    const x =
+      rightX + translationIconSize <= viewportWidth - translationIconMargin ? rightX : leftX;
+    const y =
+      belowY + translationIconSize <= viewportHeight - translationIconMargin ? belowY : aboveY;
+
+    return {
+      x: this.clampToViewport(x, translationIconSize, viewportWidth),
+      y: this.clampToViewport(y, translationIconSize, viewportHeight),
+    };
+  }
 
   private getIconSVG(): string {
     return `
@@ -119,25 +188,16 @@ class TextTranslator {
     return popup;
   }
 
-  private showTranslationIcon(x: number, y: number): void {
+  private showTranslationIcon(anchor: ViewportPoint): void {
     if (!this.translateIcon) {
       this.translateIcon = this.createTranslationIcon();
     }
 
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
-    const finalX = Math.min(
-      Math.max(x - translationIconXOffset, translationIconMargin),
-      viewportWidth - translationIconSize - translationIconMargin,
-    );
-    const finalY = Math.min(
-      Math.max(y + translationIconYOffset, translationIconMargin),
-      viewportHeight - translationIconSize - translationIconMargin,
-    );
+    this.selectionIconAnchor = anchor;
 
     Object.assign(this.translateIcon.style, {
-      left: `${finalX}px`,
-      top: `${finalY}px`,
+      left: `${anchor.x}px`,
+      top: `${anchor.y}px`,
       display: 'flex',
       opacity: '1',
       transform: 'translateY(0)',
@@ -167,11 +227,16 @@ class TextTranslator {
       return;
     }
 
+    const popupAnchor = this.selectionIconAnchor;
+    if (!popupAnchor) {
+      return;
+    }
+
     if (this.translateIcon) {
       this.translateIcon.style.display = 'none';
     }
 
-    await this.showTranslation(text, event.clientX, event.clientY + 10);
+    await this.showTranslation(text, popupAnchor.x, popupAnchor.y);
   };
 
   private async showTranslation(text: string, x: number, y: number): Promise<void> {
@@ -179,7 +244,7 @@ class TextTranslator {
       this.translatePopup = this.createTranslationPopup();
     }
 
-    this.lastPopupAnchor = { x, y };
+    this.popupAnchor = { x, y };
     this.initializePopupPosition(x, y);
 
     try {
@@ -239,18 +304,24 @@ class TextTranslator {
     translationResult: TranslationResult,
     originalText: string,
   ): string {
-    return [
-      this.createToolbarHTML(),
-      this.createOriginalTextHTML(originalText),
+    const sourceDisplay = this.createSourceDisplay(originalText);
+    const contentSections = [
+      this.createToolbarHTML(sourceDisplay.previewText),
       this.createTranslatedTextHTML(translationResult.text),
       this.createPartsOfSpeechSectionHTML(translationResult),
-    ].join('');
+    ];
+
+    if (sourceDisplay.showFullText) {
+      contentSections.push(this.createOriginalTextHTML(originalText));
+    }
+
+    return contentSections.join('');
   }
 
-  private createToolbarHTML(): string {
+  private createToolbarHTML(sourcePreviewText: string): string {
     return `
       <div class='est-popup-toolbar'>
-        <span class='est-popup-label'>TRANSLATION</span>
+        <span class='est-source-preview'>${this.escapeHTML(sourcePreviewText)}</span>
         <div class='est-popup-actions'>
           <button class='est-tool-button est-copy-button' type='button' title='复制译文' aria-label='复制译文'>
             ${this.getCopySVG()}
@@ -263,6 +334,15 @@ class TextTranslator {
     `;
   }
 
+  private createSourceDisplay(text: string): SourceDisplay {
+    const lineCount = text.split(/\r?\n/).length;
+
+    return {
+      previewText: text.replace(/\s+/g, ' ').trim(),
+      showFullText: text.length > fullSourceSectionMinLength || lineCount > 1,
+    };
+  }
+
   private createOriginalTextHTML(originalText: string): string {
     const shouldCollapseOriginal = this.shouldCollapseOriginalText(originalText);
     const collapsedClassName = shouldCollapseOriginal ? 'est-collapsed' : '';
@@ -273,9 +353,7 @@ class TextTranslator {
     return `
       <div class='est-original-section'>
         <div class='est-section-label'>SOURCE</div>
-        <div class='est-original-text ${collapsedClassName}'>
-          ${this.escapeHTML(originalText)}
-        </div>
+        <div class='est-original-text ${collapsedClassName}'>${this.escapeHTML(originalText)}</div>
         ${expandButton}
       </div>
     `;
@@ -383,8 +461,8 @@ class TextTranslator {
   private getCopySVG(): string {
     return `
       <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2'>
-        <rect x='9' y='9' width='13' height='13' rx='1'/>
-        <path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/>
+        <path d='M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2'/>
+        <rect x='8' y='2' width='8' height='4' rx='1'/>
       </svg>
     `;
   }
@@ -455,17 +533,24 @@ class TextTranslator {
     });
   }
 
+  private clampToViewport(value: number, size: number, viewportSize: number): number {
+    return Math.min(
+      Math.max(value, translationIconMargin),
+      viewportSize - size - translationIconMargin,
+    );
+  }
+
   private repositionPopup(): void {
-    if (!this.lastPopupAnchor) {
+    if (!this.popupAnchor) {
       return;
     }
 
     requestAnimationFrame(() => {
-      if (!this.lastPopupAnchor) {
+      if (!this.popupAnchor) {
         return;
       }
 
-      this.positionPopup(this.lastPopupAnchor.x, this.lastPopupAnchor.y);
+      this.positionPopup(this.popupAnchor.x, this.popupAnchor.y);
     });
   }
 

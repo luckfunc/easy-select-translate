@@ -11,6 +11,7 @@ const apiKeyInput = queryRequired<HTMLInputElement>('#api-key');
 const modelSelect = queryRequired<HTMLSelectElement>('#model');
 const clearKeyButton = queryRequired<HTMLButtonElement>('#clear-key');
 const keyState = queryRequired<HTMLSpanElement>('#key-state');
+const providerNote = queryRequired<HTMLParagraphElement>('#provider-note');
 const statusMessage = queryRequired<HTMLParagraphElement>('#status-message');
 
 settingsForm.addEventListener('submit', (event) => {
@@ -29,7 +30,7 @@ async function loadSettings(): Promise<void> {
 
   apiKeyInput.value = apiKey;
   modelSelect.value = model;
-  setSavedState(Boolean(apiKey));
+  setProviderState(Boolean(apiKey));
 }
 
 async function saveSettings(): Promise<void> {
@@ -44,13 +45,13 @@ async function saveSettings(): Promise<void> {
     apiKey,
     model: getSelectedDeepSeekModel(),
   });
-  setSavedState(true, '已保存');
+  setProviderState(true, '已切换到 DeepSeek');
 }
 
 async function clearSavedApiKey(): Promise<void> {
   await clearDeepSeekApiKey();
   apiKeyInput.value = '';
-  setSavedState(false, '已清除');
+  setProviderState(false, '已切换到 Google fallback');
 }
 
 function getSelectedDeepSeekModel(): DeepSeekModel {
@@ -61,9 +62,12 @@ function getSelectedDeepSeekModel(): DeepSeekModel {
     : 'deepseek-v4-flash';
 }
 
-function setSavedState(saved: boolean, message = ''): void {
-  keyState.textContent = saved ? 'SAVED' : 'EMPTY';
-  keyState.classList.toggle('saved', saved);
+function setProviderState(useDeepSeek: boolean, message = ''): void {
+  keyState.textContent = useDeepSeek ? 'DEEPSEEK' : 'GOOGLE';
+  keyState.classList.toggle('saved', useDeepSeek);
+  providerNote.textContent = useDeepSeek
+    ? '已配置 DeepSeek Key，划词翻译将优先使用 DeepSeek。'
+    : '未配置 DeepSeek Key，将自动使用 Google 翻译。';
   statusMessage.textContent = message;
 }
 
