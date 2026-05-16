@@ -236,9 +236,9 @@
   max-width: min(358px, calc(100vw - 34px));
   padding: 12px 14px 13px;
   color: var(--c-text-main);
-  font-size: 17px;
-  font-weight: 620;
-  line-height: 1.5;
+  font-size: 15px;
+  font-weight: 580;
+  line-height: 1.55;
   white-space: pre-wrap;
   word-break: break-word;
 }
